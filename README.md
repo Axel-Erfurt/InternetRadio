@@ -5,4 +5,4 @@ play and record internet radio stations
 - PyQt5
 - wget
 
-![alt text](http://url/to/img.png)
+![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/myradio.png)
