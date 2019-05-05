@@ -1,0 +1,26 @@
+MDR Info low,http://mdr-284340-0.cast.mdr.de/mdr/284340/0/mp3/low/stream.mp3
+MDR Info high,http://mdr-284340-0.cast.mdr.de/mdr/284340/0/mp3/high/stream.mp3
+Landeswelle Thüringen,http://stream.landeswelle.de/lwt/mp3-128/web/stream.mp3
+Antenne Thüringen,http://stream.antennethueringen.de/live/mp3-128/
+MDR SCHLAGERWELT Thüringen,http://avw.mdr.de/streams/990601-0_mp3_high.m3
+Offener Hörfunkkanal Eisenach,http://tbradio.de/wartburgradio.m3u
+R.SA Ostrock Stream,http://streams.rsa-sachsen.de/rsa-ostrock/mp3-192/mediaplayerrsa
+R.SA Oldie-Club,http://streams.rsa-sachsen.de/rsa-oldies/mp3-192/mediaplayerrsa
+R.SA Rockzirkus,http://streams.rsa-sachsen.de/rsa-rockzirkus/mp3-192/mediaplayerrsa
+R.SA Beatles Stream,http://streams.rsa-sachsen.de/rsa-beatles/mp3-192/mediaplayerrsa
+Radio21 – Classic-Rock,http://188.94.97.91/radio21.mp3
+Bluegrass,http://199.180.72.2:8607/
+Radio Hamlar,http://radiohamlar.stream.laut.fm/radiohamlar?pl=m3u&t302=2018-08-27_17-40-49&uuid=79e0126a-6db8-42a9-9d1c-a164ecdbd514
+Metal Hammer,http://metal-hammer.stream.laut.fm/metal-hammer?pl=m3u&t302=2018-08-27_17-45-30&uuid=c6d9b72b-2366-4673-ba50-d070daca09d4
+Classic Rock Radio,https://internetradio.salue.de:8443/classicrock.mp3
+AC/DC Radio Blob,http://streams.radiobob.de/bob-acdc/mp3-128/streams.radiobob.de/
+Classic Rock Radio Blob,http://streams.radiobob.de/bob-classicrock/mp3-128/streams.radiobob.de/
+Kuschel Rock Radio Blob,http://streams.radiobob.de/bob-kuschelrock/mp3-128/streams.radiobob.de/
+MDR SPUTNIK Rock-Channel,http://mdr-284331-1.cast.mdr.de/mdr/284331/1/mp3/high/stream.mp3
+MDR JUMP Rock-Channel,http://mdr-284321-1.cast.mdr.de/mdr/284321/1/mp3/high/stream.mp3
+eldoradio,http://sender.eldoradio.de:8000/128.mp3
+FREI,http://streaming.fueralle.org:8000/Radio-F.R.E.I
+Antenne Bayern Oldies,http://mp3channels.webradio.antenne.de/oldies-but-goldies
+AFN Country,http://18813.live.streamtheworld.com:80/AFN_CTYAAC_SC
+Antenne Thr Rock,https://stream.antennethueringen.de/rock/mp3-192/web/
+Landeswelle Thr Oldies,http://stream.landeswelle.de/lwol/mp3-192/web
