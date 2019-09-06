@@ -31,6 +31,7 @@ class Editor(QMainWindow):
         self.wid = QWidget()
         self.wid.setLayout(self.layout)
         self.setCentralWidget(self.wid)
+        self.setGeometry(0, 0, 800, 600)
         self.show()
 
     def closeEvent(self, e):
@@ -118,7 +119,7 @@ class MainWin(QMainWindow):
         spc1 = QSpacerItem(6, 10, QSizePolicy.Expanding, QSizePolicy.Maximum)
         self.level_sld = QSlider(self)
         self.level_sld.setTickPosition(1)
-        self.level_sld.setSingleStep(5)
+#        self.level_sld.setPageStep(2)
         self.level_sld.setOrientation(Qt.Horizontal)
         self.level_sld.setValue(65)
         self.level_lbl = QLabel(self)
@@ -180,7 +181,6 @@ class MainWin(QMainWindow):
 
     def edit_Channels(self):
         self.edWin = Editor()
-        self.edWin.setGeometry(0, 0, 700, 450)
         self.show()
         with open (self.radiofile, 'r') as f:
             t = f.read()
@@ -281,11 +281,13 @@ class MainWin(QMainWindow):
         self.play_btn.setEnabled(False)
         self.pause_btn.setEnabled(True)
         self.stop_btn.setEnabled(True)
+        self.rec_btn.setEnabled(True)
  
     def pause_preview(self):
         self.player.set_on_pause()
         self.play_btn.setEnabled(True)
         self.pause_btn.setEnabled(False)
+        self.rec_btn.setEnabled(False)
         self.play_btn.setFocus(True)
         self.msglbl.setText("Pause")
  
@@ -294,6 +296,7 @@ class MainWin(QMainWindow):
         self.play_btn.setEnabled(True)
         self.pause_btn.setEnabled(False)
         self.stop_btn.setEnabled(False)
+        self.rec_btn.setEnabled(False)
         self.msglbl.setText("Stopped")
  
     def set_sound_level(self, level):
@@ -312,7 +315,7 @@ class MainWin(QMainWindow):
             self.deleteOutFile()
             cmd = ("wget -q "  + self.current_station + " -O " + self.outfile)
             print(cmd)         
-            self.recording = True   
+            self.is_recording = True   
             self.process.startDetached(cmd)
 #            wget.download (self.current_station, self.outfile)
             self.rec_btn.setVisible(False)
@@ -325,7 +328,7 @@ class MainWin(QMainWindow):
             self.deleteOutFile()
             cmd = ("timeout 1h wget -q "  + self.current_station + " -O " + self.outfile)
             print(cmd)         
-            self.recording = True   
+            self.is_recording = True   
             self.process.startDetached(cmd)
 #            wget.download (self.current_station, self.outfile)
             self.rec_btn.setVisible(False)
