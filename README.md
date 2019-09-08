@@ -7,4 +7,4 @@ play and record internet radio stations
 
 September 6, 2019 added Channel Editor
 
-![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/myradio.png)
+![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/radio2.png)
