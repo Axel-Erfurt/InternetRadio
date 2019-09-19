@@ -4,12 +4,13 @@
 import os
 import sys
 import wget
-from PyQt5.QtCore import Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QProcess, QStandardPaths, QFile, QDir
-from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, QMainWindow, QFileDialog, QListView,
-                             QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, QMessageBox, QPlainTextEdit)
+import encodings
+from PyQt5.QtCore import Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, QStandardPaths, QFile, QDir, QSettings
+from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, QMainWindow, QFileDialog, QListView, QMenu, qApp, QAction, 
+                             QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, QMessageBox, QPlainTextEdit, QSystemTrayIcon)
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
-from PyQt5.QtGui import QIcon, QPixmap, QPalette
+from PyQt5.QtGui import QIcon, QPixmap, QPalette, QCursor
 from PyQt5.Qt import QClipboard
 
 changed = pyqtSignal(QMimeData)
@@ -24,7 +25,7 @@ class Editor(QMainWindow):
         self.close_btn = QPushButton("Close", self)
         self.close_btn.setFixedWidth(btnwidth)
         self.close_btn.setIcon(QIcon.fromTheme("window-close"))
-        self.close_btn.clicked.connect(lambda: self.close())
+        self.close_btn.clicked.connect(self.closeWin) ###(lambda: self.hide())
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.radio_editor)
         self.layout.addWidget(self.close_btn)
@@ -34,27 +35,40 @@ class Editor(QMainWindow):
         self.setGeometry(0, 0, 800, 600)
         self.show()
 
-    def closeEvent(self, e):
+    def closeWin(self):
         if self.isModified == True:
-            with open(MainWin().radiofile, 'r+') as f:
-                f.write(self.radio_editor.toPlainText())
+            with open(MainWin().radiofile, 'w') as f:
+                if sys.version[0] == "2":
+                    f.write(self.radio_editor.toPlainText().encode('utf8', 'replace'))
+                elif sys.version[0] == "3":
+                    f.write(str(self.radio_editor.toPlainText()))
                 f.close()
                 print("saved, closing editor")
-#                MainWin().close()
-                os.execv(__file__, sys.argv)
-                self.close()
+                os.execv(sys.argv[0], sys.argv)
         else:
             print("closing editor")
-            self.close()
+            self.hide()
+
+#    def closeEvent(self, e):
+#        if self.isModified == True:
+#            with open(MainWin().radiofile, 'r+') as f:
+#                f.write(str(self.radio_editor.toPlainText().encode('utf-8')))
+#                f.close()
+#                print("saved, closing editor")
+#                os.execv(sys.argv[0], sys.argv)
+#                self.close()
+#        else:
+#            print("closing editor")
+#            self.close()
 
     def setModified(self):
         self.isModified = True
-    
-        
+
 
 class MainWin(QMainWindow):
     def __init__(self):
         super(MainWin, self).__init__()
+        self.settings = QSettings("myRadio", "settings")
         self.setStyleSheet(mystylesheet(self))
         self.radioNames = []
         self.radiolist = []
@@ -104,7 +118,7 @@ class MainWin(QMainWindow):
         self.stoprec_btn.setFlat(True)
         self.stoprec_btn.setIcon(QIcon.fromTheme("media-playback-stop"))
         self.stoprec_btn.clicked.connect(self.stop_recording)
-        self.rec_btn.setToolTip("Stop Recording")
+        self.stoprec_btn.setToolTip("Stop Recording")
         self.layout1.addWidget(self.stoprec_btn)
         ### edit Radiio List
         self.edit_btn = QPushButton("", self)
@@ -119,7 +133,6 @@ class MainWin(QMainWindow):
         spc1 = QSpacerItem(6, 10, QSizePolicy.Expanding, QSizePolicy.Maximum)
         self.level_sld = QSlider(self)
         self.level_sld.setTickPosition(1)
-#        self.level_sld.setPageStep(2)
         self.level_sld.setOrientation(Qt.Horizontal)
         self.level_sld.setValue(65)
         self.level_lbl = QLabel(self)
@@ -141,7 +154,6 @@ class MainWin(QMainWindow):
 
         self.process = QProcess()
         self.process.started.connect(self.getPID)
-#        self.process.finished.connect(self.saveMovie)
 
         self.wg.setLayout(self.layout)
         self.setCentralWidget(self.wg)
@@ -152,15 +164,106 @@ class MainWin(QMainWindow):
         self.createStatusBar()
         self.setAcceptDrops(True)
         self.setWindowTitle("Radio")
+        icon = os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png")
+        self.setWindowIcon(QIcon(icon))
+        self.stationActs = []
 
 
         self.setMinimumHeight(180)
         self.setFixedWidth(460)
         self.move(0, 30)
         self.findExecutable()
-        self.urlCombo.setFocus()
-        self.urlCombo.setCurrentIndex(0)
-        self.url_changed()
+
+        self.readSettings()
+
+        # Init tray icon
+        trayIcon = QIcon(icon)
+        self.trayIcon = QSystemTrayIcon()
+        self.trayIcon.setIcon(trayIcon)
+        self.trayIcon.show()
+        self.trayIcon.activated.connect(self.on_systray_activated)
+
+#        self.show()
+        self.geo = self.geometry()
+        self.editAction = QAction(QIcon.fromTheme("preferences-system"), "edit Channels", triggered = self.edit_Channels)
+        self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "show Main Window", triggered = self.showMain)
+        self.recordAction = QAction(QIcon.fromTheme("media-record"), "record channel", triggered = self.recordRadio1)
+        self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", triggered = self.stop_recording)
+
+    def on_systray_activated(self, i_reason):
+        buttons = qApp.mouseButtons()
+        if buttons == Qt.LeftButton:
+            self.leftMenu()
+
+    def leftMenu(self):
+        self.tray_menu = QMenu()
+        ##################
+        for i in range(self.urlCombo.count() - 1):
+            text = self.urlCombo.itemData(i, Qt.DisplayRole)
+            data = self.urlCombo.itemData(i, Qt.DisplayRole)
+            self.stationActs.append(QAction(QIcon.fromTheme("browser"), text, triggered = self.openTrayStation))
+            self.stationActs[i].setData(str(i))
+            self.tray_menu.addAction(self.stationActs[i])
+        ##################
+        self.tray_menu.addSeparator()
+        if self.is_recording == False:
+            self.tray_menu.addAction(self.recordAction)
+            self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
+        if self.is_recording == True:
+            self.tray_menu.addAction(self.stopRecordAction)
+        self.tray_menu.addSeparator()
+        self.tray_menu.addAction(self.editAction)
+        self.tray_menu.addAction(self.showWinAction)
+        self.tray_menu.addSeparator()
+        exitAction = self.tray_menu.addAction(QIcon.fromTheme("application-exit"), "exit")
+        exitAction.triggered.connect(self.exitApp)
+        self.tray_menu.exec_(QCursor.pos())
+
+    def showMain(self):
+        if self.isVisible() ==False:
+            self.showWinAction.setText("hide Main Window")
+            self.setVisible(True)
+        elif self.isVisible() ==True:
+            self.showWinAction.setText("show Main Window")
+            self.setVisible(False)
+
+    def openTrayStation(self):
+        action = self.sender()
+        if action:
+            ind = action.data()
+            print("%s %s %s" % ("switch to station:", ind, self.urlCombo.currentText()))
+            self.urlCombo.setCurrentIndex(int(ind))
+
+    def exitApp(self):
+        self.close()
+
+    def message(self):
+        QMessageBox.information(
+                None, 'Systray Message', 'Click Message')
+
+    def closeEvent(self, e):
+        print("writing settings ...\nGoodbye ...")
+        self.writeSettings()
+
+    def readSettings(self):
+        print("reading settings ...")
+        if self.settings.contains("pos"):
+            pos = self.settings.value("pos", QPoint(200, 200))
+            self.move(pos)
+        else:
+            self.move(0, 26)
+        if self.settings.contains("index"):
+            index = int(self.settings.value("index"))
+            self.urlCombo.setFocus()
+            self.urlCombo.setCurrentIndex(index)
+#            self.url_changed()
+        else:
+            self.urlCombo.setCurrentIndex(0)
+            self.url_changed()
+
+    def writeSettings(self):
+        self.settings.setValue("pos", self.pos())
+        self.settings.setValue("index", self.urlCombo.currentIndex())
 
     def readStations(self):
         self.urlCombo.clear()
@@ -168,7 +271,8 @@ class MainWin(QMainWindow):
         self.channels = []
         dir = os.path.dirname(sys.argv[0])
         self.radiofile = os.path.join(dir, "myradio.txt")
-        with open(self.radiofile, "r") as f:
+        import codecs
+        with open(self.radiofile, 'r') as f:
             self.radioStations = f.read()
             f.close()
             self.radioStations = self.remove_last_line_from_string(self.radioStations)
@@ -181,7 +285,7 @@ class MainWin(QMainWindow):
 
     def edit_Channels(self):
         self.edWin = Editor()
-        self.show()
+#        self.show()
         with open (self.radiofile, 'r') as f:
             t = f.read()
             f.close()
@@ -200,7 +304,8 @@ class MainWin(QMainWindow):
     def findExecutable(self):
         wget = QStandardPaths.findExecutable("wget")
         if wget != "":
-            print("wget found at " + wget)
+            print("%s %s %s" % ("wget found at ", wget, " *** recording enabled"))
+            self.msglbl.setText("recording enabled")
             self.recording_enabled = True
         else:
             self.msgbox("wget not found\nrecording disabled")
@@ -234,15 +339,15 @@ class MainWin(QMainWindow):
             self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
  
     def url_changed(self):
-        ind = self.urlCombo.currentIndex()
-        url = self.radiolist[ind]
-        print("playing " + url)
-        self.current_station = url
-        self.player.stop()
-        self.playRadioStation()
+        if self.urlCombo.currentIndex() < self.urlCombo.count() - 1:
+            ind = self.urlCombo.currentIndex()
+            url = self.radiolist[ind]
+            print("%s %s" %("playing", url))
+            self.current_station = url
+            self.player.stop()
+            self.playRadioStation()
  
     def playRadioStation(self):
-#        self.player.set_media(None)
         if self.player.is_on_pause:
             self.set_running_player()
             self.player.start()
@@ -338,20 +443,25 @@ class MainWin(QMainWindow):
 
     def stop_recording(self):
         if self.is_recording == True:
+            self.showMain()
             self.process.close()
             print("stopping recording")
             self.is_recording = False
             QProcess.execute("killall wget")
+            if self.isVisible() ==False:
+                self.showWinAction.setText("hide Main Window")
+                self.setVisible(True)
             self.saveMovie()
             self.stoprec_btn.setVisible(False)
             self.rec_btn.setVisible(True)
+            self.showMain()
         else:
             self.msgbox("Recording is not in progress")
 
     def saveMovie(self):
         if self.is_recording == False:
             print("saving audio")
-            self.setWindowTitle("myRadio")
+#            self.setWindowTitle("myRadio")
             infile = QFile(self.outfile)
             path, _ = QFileDialog.getSaveFileName(self, "Save as...", QDir.homePath() + "/Musik/" + self.urlCombo.currentText().replace("-", " ").replace(" - ", " ") + ".mp3",
                 "Audio (*.mp3)")
@@ -359,13 +469,13 @@ class MainWin(QMainWindow):
                 savefile = path
                 if QFile(savefile).exists:
                     QFile(savefile).remove()
-                print("saving " + savefile)
+                print("%s %s" % ("saving", savefile))
                 if not infile.copy(savefile):
                     QMessageBox.warning(self, "Error",
                         "Cannot write file %s:\n%s." % (path, infile.errorString())) 
 #                self.deleteOutFile()
 #                self.process.setProcessState(0)
-                print("process state: " + str(self.process.state()))
+                print("%s %s" % ("process state: ", str(self.process.state())))
                 if QFile(self.outfile).exists:
                     print("exists")
                     QFile(self.outfile).remove()
@@ -373,14 +483,14 @@ class MainWin(QMainWindow):
 
     def deleteOutFile(self):
         if QFile(self.outfile).exists:
-            print("deleting file " + self.outfile) 
+            print("%s %s" % ("deleting file", self.outfile)) 
             if QFile(self.outfile).remove:
-                print(self.outfile + " deleted")       
+                print("%s %s" % (self.outfile, "deleted"))  
             else:  
-                print(self.outfile + " not deleted")   
+                print("%s %s" % (self.outfile, "not deleted"))
 
     def getPID(self):
-        print(self.process.pid(), self.process.processId() )
+        print("%s %s" % (self.process.pid(), self.process.processId()))
 
  
 class RadioPlayer(QMediaPlayer):
@@ -512,7 +622,7 @@ border-color: #999;
 
 QSlider::handle:horizontal:disabled {
 background: #eee;
-border-radius: 54px;
+border-radius: 4px;
 }
     """    
 
@@ -520,7 +630,7 @@ border-radius: 54px;
 if __name__ == "__main__":
     app = QApplication([])
     win = MainWin()
-    win.setWindowIcon(QIcon.fromTheme("radio"))
-    win.show()
+#    win.show()
+#    win.setVisible(False)
     sys.exit(app.exec_())
-    
+  
