@@ -164,8 +164,8 @@ class MainWin(QMainWindow):
         self.createStatusBar()
         self.setAcceptDrops(True)
         self.setWindowTitle("Radio")
-        icon = os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png")
-        self.setWindowIcon(QIcon(icon))
+        self.tIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
+        self.setWindowIcon(self.tIcon)
         self.stationActs = []
 
 
@@ -177,11 +177,16 @@ class MainWin(QMainWindow):
         self.readSettings()
 
         # Init tray icon
-        trayIcon = QIcon(icon)
+        trayIcon = QIcon(self.tIcon)
+
         self.trayIcon = QSystemTrayIcon()
+#        self.trayIcon.activated.connect(self.showMain)
         self.trayIcon.setIcon(trayIcon)
         self.trayIcon.show()
         self.trayIcon.activated.connect(self.on_systray_activated)
+#        self.trayIcon.setToolTip("Welcome")
+        qApp.setStyleSheet("QSystemTrayIcon::message { font-size: 10pt; color: #2e3436; background: #c4a000; border: 1px solid #1f3c5d; }");
+        self.metaLabel = QLabel()
 
 #        self.show()
         self.geo = self.geometry()
@@ -194,9 +199,13 @@ class MainWin(QMainWindow):
         buttons = qApp.mouseButtons()
         if buttons == Qt.LeftButton:
             self.leftMenu()
+        elif buttons == Qt.RightButton:
+            self.showMain()
+    
 
     def leftMenu(self):
         self.tray_menu = QMenu()
+#        self.tray_menu.setToolTip("Hello")
         ##################
         for i in range(self.urlCombo.count() - 1):
             text = self.urlCombo.itemData(i, Qt.DisplayRole)
@@ -256,7 +265,8 @@ class MainWin(QMainWindow):
             index = int(self.settings.value("index"))
             self.urlCombo.setFocus()
             self.urlCombo.setCurrentIndex(index)
-#            self.url_changed()
+            if self.urlCombo.currentIndex() == 0:
+                self.url_changed()
         else:
             self.urlCombo.setCurrentIndex(0)
             self.url_changed()
@@ -328,16 +338,18 @@ class MainWin(QMainWindow):
             if not trackInfo == None:
                 if not trackInfo2 == None:
                    self.msglbl.setText("%s %s" % (trackInfo, trackInfo2))
+                   self.metaLabel.setText("%s %s" % (trackInfo, trackInfo2))
+                   self.trayIcon.showMessage("Radio", "%s %s" % (trackInfo, trackInfo2), self.tIcon, 5000)
                 else:
-#                    self.bar.showMessage(trackInfo, 0)
                     self.msglbl.setText(trackInfo)
+                    self.trayIcon.showMessage("Radio", trackInfo, self.tIcon, 5000)
                     self.msglbl.adjustSize()
                     self.adjustSize()
             else:
                 self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
         else:
-            self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
- 
+            self.msglbl.setText("%s %s" % ("playing", self.urlCombo))
+
     def url_changed(self):
         if self.urlCombo.currentIndex() < self.urlCombo.count() - 1:
             ind = self.urlCombo.currentIndex()
