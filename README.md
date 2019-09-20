@@ -1,6 +1,9 @@
 # InternetRadio
 play and record internet radio stations
 
+- left click on systray icon -> select channel
+- right click on systray icon -> show/hide main window
+
 ## Requirements:
 - PyQt5
 - wget
