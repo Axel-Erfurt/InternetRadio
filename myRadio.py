@@ -5,6 +5,7 @@ import os
 import sys
 import wget
 import encodings
+from urllib import request
 from PyQt5.QtCore import Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, QStandardPaths, QFile, QDir, QSettings
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, QMainWindow, QFileDialog, QListView, QMenu, qApp, QAction, 
                              QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, QMessageBox, QPlainTextEdit, QSystemTrayIcon)
@@ -195,6 +196,24 @@ class MainWin(QMainWindow):
         self.recordAction = QAction(QIcon.fromTheme("media-record"), "record channel", triggered = self.recordRadio1)
         self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", triggered = self.stop_recording)
 
+    def getURLfromPLS(self, inURL):
+        response = request.urlopen(inURL)
+        html = response.read().splitlines()
+        
+        t = str(html[1])
+        url = t.partition("=")[2].partition("'")[0]
+#        print(url)
+        return (url)
+
+    def getURLfromM3U(self, inURL):
+        response = request.urlopen(inURL)
+        html = response.read().splitlines()
+        
+        t = str(html[1])
+        url = t.partition("'")[2].partition("'")[0]
+        print(url)
+        return (url)
+
     def on_systray_activated(self, i_reason):
         buttons = qApp.mouseButtons()
         if buttons == Qt.LeftButton:
@@ -289,7 +308,10 @@ class MainWin(QMainWindow):
             for t in self.radioStations:
                 self.channels.append(t)
             for lines in self.radioStations.split("\n"):
-                self.urlCombo.addItem(lines.partition(",")[0])
+                if not lines.startswith("--"):
+                    self.urlCombo.addItem(QIcon.fromTheme("browser"), lines.partition(",")[0])
+                else:
+                    self.urlCombo.addItem(lines.partition(",")[0])            
                 self.radiolist.append(lines.partition(",")[2])
         self.urlCombo.setCurrentIndex(0)
 
@@ -305,6 +327,8 @@ class MainWin(QMainWindow):
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_F5:
             self.playURL()
+        elif e.key() == Qt.Key_F1:
+            QMessageBox.information(self, "Information", "F5 -> play URL from Clipboard").exec_()
         else:
             e.accept()
 
@@ -352,12 +376,13 @@ class MainWin(QMainWindow):
 
     def url_changed(self):
         if self.urlCombo.currentIndex() < self.urlCombo.count() - 1:
-            ind = self.urlCombo.currentIndex()
-            url = self.radiolist[ind]
-            print("%s %s" %("playing", url))
-            self.current_station = url
-            self.player.stop()
-            self.playRadioStation()
+            if not self.urlCombo.currentText().startswith("--"):
+                ind = self.urlCombo.currentIndex()
+                url = self.radiolist[ind]
+                print("%s %s" %("playing", url))
+                self.current_station = url
+                self.player.stop()
+                self.playRadioStation()
  
     def playRadioStation(self):
         if self.player.is_on_pause:
@@ -377,7 +402,16 @@ class MainWin(QMainWindow):
 
     def playURL(self):
         clip = QApplication.clipboard()
-        self.current_station = clip.text()
+        if not clip.text().endswith(".pls") and not clip.text().endswith(".m3u"):
+            self.current_station = clip.text()
+        elif clip.text().endswith(".pls") :
+            print("is a pls")
+            url = self.getURLfromPLS(clip.text())
+            self.current_station = url
+        elif clip.text().endswith(".m3u") :
+            print("is a pls")
+            url = self.getURLfromM3U(clip.text())
+            self.current_station = url
         print(self.current_station)
 
         if self.player.is_on_pause:
@@ -393,6 +427,7 @@ class MainWin(QMainWindow):
         self.set_running_player()
         self.player.start()
         self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
+
  
     def set_running_player(self):
         self.play_btn.setEnabled(False)
@@ -475,7 +510,8 @@ class MainWin(QMainWindow):
             print("saving audio")
 #            self.setWindowTitle("myRadio")
             infile = QFile(self.outfile)
-            path, _ = QFileDialog.getSaveFileName(self, "Save as...", QDir.homePath() + "/Musik/" + self.urlCombo.currentText().replace("-", " ").replace(" - ", " ") + ".mp3",
+            path, _ = QFileDialog.getSaveFileName(self, "Save as...", QDir.homePath() + "/Musik/" \
+                                                                                        + self.urlCombo.currentText().replace("-", " ").replace(" - ", " ") + ".mp3",
                 "Audio (*.mp3)")
             if (path != ""):
                 savefile = path
