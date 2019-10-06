@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatu
                              QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, QMessageBox, QPlainTextEdit, QSystemTrayIcon)
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
-from PyQt5.QtGui import QIcon, QPixmap, QPalette, QCursor
+from PyQt5.QtGui import QIcon, QPixmap, QPalette, QCursor, QStandardItem
 from PyQt5.Qt import QClipboard
 
 changed = pyqtSignal(QMimeData)
@@ -223,6 +223,7 @@ class MainWin(QMainWindow):
     
 
     def leftMenu(self):
+        menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
         self.tray_menu = QMenu()
         ##################
         for i in range(self.urlCombo.count() - 1):
@@ -236,7 +237,7 @@ class MainWin(QMainWindow):
             if not text.startswith("--"):
                 self.tray_menu.addAction(self.stationActs[i])
             else:
-                self.tray_menu.addSection(text)
+                self.tray_menu.addSection(menuSectionIcon,text.replace("--", ""))
         ##################
         self.tray_menu.addSeparator()
         if self.is_recording == False:
@@ -301,6 +302,7 @@ class MainWin(QMainWindow):
         self.settings.setValue("index", self.urlCombo.currentIndex())
 
     def readStations(self):
+        menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
         self.urlCombo.clear()
         self.radiolist = []
         self.channels = []
@@ -317,7 +319,9 @@ class MainWin(QMainWindow):
                 if not lines.startswith("--"):
                     self.urlCombo.addItem(QIcon.fromTheme("browser"), lines.partition(",")[0])
                 else:
-                    self.urlCombo.addItem(lines.partition(",")[0])            
+                    m = QStandardItem(menuSectionIcon,lines.partition(",")[0])
+                    m.setEnabled(False)
+                    self.urlCombo.model().appendRow(m)            
                 self.radiolist.append(lines.partition(",")[2])
         self.urlCombo.setCurrentIndex(0)
 
@@ -696,3 +700,4 @@ if __name__ == "__main__":
 #    win.show()
 #    win.setVisible(False)
     sys.exit(app.exec_())
+  
