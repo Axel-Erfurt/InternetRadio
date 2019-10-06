@@ -229,7 +229,10 @@ class MainWin(QMainWindow):
         for i in range(self.urlCombo.count() - 1):
             text = self.urlCombo.itemData(i, Qt.DisplayRole)
             data = self.urlCombo.itemData(i, Qt.DisplayRole)
-            self.stationActs.append(QAction(QIcon.fromTheme("browser"), text, triggered = self.openTrayStation))
+            if not text.startswith("--"):
+                self.stationActs.append(QAction(QIcon.fromTheme("browser"), text, triggered = self.openTrayStation))
+            else:
+                self.stationActs.append(QAction(text, triggered = self.openTrayStation))
             self.stationActs[i].setData(str(i))
             self.tray_menu.addAction(self.stationActs[i])
         ##################
