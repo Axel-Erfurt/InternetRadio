@@ -224,22 +224,25 @@ class MainWin(QMainWindow):
 
     def leftMenu(self):
         self.tray_menu = QMenu()
-#        self.tray_menu.setToolTip("Hello")
         ##################
         for i in range(self.urlCombo.count() - 1):
             text = self.urlCombo.itemData(i, Qt.DisplayRole)
             data = self.urlCombo.itemData(i, Qt.DisplayRole)
-            if not text.startswith("--"):
-                self.stationActs.append(QAction(QIcon.fromTheme("browser"), text, triggered = self.openTrayStation))
+            if text.startswith("--"):
+                self.stationActs.append(text)
             else:
-                self.stationActs.append(QAction(text, triggered = self.openTrayStation))
-            self.stationActs[i].setData(str(i))
-            self.tray_menu.addAction(self.stationActs[i])
+                self.stationActs.append(QAction(QIcon.fromTheme("browser"), text, triggered = self.openTrayStation))
+                self.stationActs[i].setData(str(i))
+            if not text.startswith("--"):
+                self.tray_menu.addAction(self.stationActs[i])
+            else:
+                self.tray_menu.addSection(text)
         ##################
         self.tray_menu.addSeparator()
         if self.is_recording == False:
-            self.tray_menu.addAction(self.recordAction)
-            self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
+            if not self.urlCombo.currentText().startswith("--"):
+                self.tray_menu.addAction(self.recordAction)
+                self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
         if self.is_recording == True:
             self.tray_menu.addAction(self.stopRecordAction)
         self.tray_menu.addSeparator()
@@ -385,7 +388,16 @@ class MainWin(QMainWindow):
                 print("%s %s" %("playing", url))
                 self.current_station = url
                 self.player.stop()
+                self.rec_btn.setVisible(True)
+                self.stop_btn.setVisible(True)
+                self.play_btn.setVisible(True)
+                self.pause_btn.setVisible(True)
                 self.playRadioStation()
+            else:
+                self.rec_btn.setVisible(False)
+                self.stop_btn.setVisible(False)
+                self.play_btn.setVisible(False)
+                self.pause_btn.setVisible(False)
  
     def playRadioStation(self):
         if self.player.is_on_pause:
@@ -684,4 +696,3 @@ if __name__ == "__main__":
 #    win.show()
 #    win.setVisible(False)
     sys.exit(app.exec_())
-  
