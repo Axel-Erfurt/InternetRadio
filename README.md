@@ -8,6 +8,10 @@ play and record internet radio stations
 - PyQt5
 - wget
 
+### Installation Mint / Ubuntu
+
+> wget 'https://raw.githubusercontent.com/Axel-Erfurt/InternetRadio/master/InternetRadioInstall.sh' -O ~/Downloads/InternetRadioInstall.sh && chmod +x ~/Downloads/InternetRadioInstall.sh && ~/Downloads/InternetRadioInstall.sh
+
 September 6, 2019 added Channel Editor
 
 ![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/radio2.png)
