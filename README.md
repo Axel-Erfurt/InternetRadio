@@ -8,6 +8,18 @@ play and record internet radio stations
 - PyQt5
 - wget
 
+### Channel Editor
+
+Format:
+>-- Category --
+>Name,URL
+
+Example:
+
+>-- Information --
+>MDR Aktuell,http://mdr-284340-0.cast.mdr.de/mdr/284340/0/mp3/low/stream.mp3
+>Antenne Thüringen,http://stream.antennethueringen.de/live/mp3-128/
+
 ### Installation Mint / Ubuntu
 
 > wget 'https://raw.githubusercontent.com/Axel-Erfurt/InternetRadio/master/InternetRadioInstall.sh' -O ~/Downloads/InternetRadioInstall.sh && chmod +x ~/Downloads/InternetRadioInstall.sh && ~/Downloads/InternetRadioInstall.sh
