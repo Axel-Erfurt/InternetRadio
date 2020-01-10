@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=myRadio
+Comment=play radio staions
+Exec=sh -c "python3 ~/.local/share/InternetRadio/myRadio.py"
+Icon=~/.local/share/InternetRadio/radio1.png
+Path=
+Terminal=false
+StartupNotify=true
