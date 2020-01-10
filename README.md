@@ -11,16 +11,17 @@ play and record internet radio stations
 ### Channel Editor
 
 Format:
->-- Category --
-
->Name,URL
+```
+-- Category --
+Name,URL
+```
 
 Example:
-
->-- Information --
->MDR Aktuell,http://mdr-284340-0.cast.mdr.de/mdr/284340/0/mp3/low/stream.mp3
-
->Antenne Thüringen,http://stream.antennethueringen.de/live/mp3-128/
+```
+-- Information --
+MDR Aktuell,http://mdr-284340-0.cast.mdr.de/mdr/284340/0/mp3/low/stream.mp3
+Antenne Thüringen,http://stream.antennethueringen.de/live/mp3-128/
+```
 
 ### Installation Mint / Ubuntu
 
