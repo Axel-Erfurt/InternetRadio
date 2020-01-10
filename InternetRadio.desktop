@@ -2,9 +2,9 @@
 Version=1.0
 Type=Application
 Name=myRadio
-Comment=play radio staions
+Comment=play radio stations
 Exec=sh -c "python3 ~/.local/share/InternetRadio/myRadio.py"
-Icon=~/.local/share/InternetRadio/radio_bg.png
+Icon=multimedia-player
 Path=
 Terminal=false
 StartupNotify=true
