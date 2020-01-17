@@ -5,6 +5,7 @@ Name=myRadio
 Comment=play radio stations
 Exec=sh -c "python3 ~/.local/share/InternetRadio/myRadio.py"
 Icon=multimedia-player
+Categories=Audio
 Path=
 Terminal=false
 StartupNotify=true
