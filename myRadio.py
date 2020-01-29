@@ -6,9 +6,12 @@ import sys
 import wget
 import encodings
 from urllib import request
-from PyQt5.QtCore import Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, QStandardPaths, QFile, QDir, QSettings
-from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, QMainWindow, QFileDialog, QListView, QMenu, qApp, QAction, 
-                             QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, QMessageBox, QPlainTextEdit, QSystemTrayIcon)
+from PyQt5.QtCore import (Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, 
+                            QStandardPaths, QFile, QDir, QSettings)
+from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, 
+                            QMainWindow, QFileDialog, QListView, QMenu, qApp, QAction, 
+                             QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, 
+                            QMessageBox, QPlainTextEdit, QSystemTrayIcon)
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QCursor, QStandardItem
@@ -26,7 +29,7 @@ class Editor(QMainWindow):
         self.close_btn = QPushButton("Close", self)
         self.close_btn.setFixedWidth(btnwidth)
         self.close_btn.setIcon(QIcon.fromTheme("window-close"))
-        self.close_btn.clicked.connect(self.closeWin) ###(lambda: self.hide())
+        self.close_btn.clicked.connect(self.closeWin)
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.radio_editor)
         self.layout.addWidget(self.close_btn)
@@ -49,18 +52,6 @@ class Editor(QMainWindow):
         else:
             print("closing editor")
             self.hide()
-
-#    def closeEvent(self, e):
-#        if self.isModified == True:
-#            with open(MainWin().radiofile, 'r+') as f:
-#                f.write(str(self.radio_editor.toPlainText().encode('utf-8')))
-#                f.close()
-#                print("saved, closing editor")
-#                os.execv(sys.argv[0], sys.argv)
-#                self.close()
-#        else:
-#            print("closing editor")
-#            self.close()
 
     def setModified(self):
         self.isModified = True
@@ -181,20 +172,19 @@ class MainWin(QMainWindow):
         trayIcon = QIcon(self.tIcon)
 
         self.trayIcon = QSystemTrayIcon()
-#        self.trayIcon.activated.connect(self.showMain)
         self.trayIcon.setIcon(trayIcon)
         self.trayIcon.show()
         self.trayIcon.activated.connect(self.on_systray_activated)
-#        self.trayIcon.setToolTip("Welcome")
-        qApp.setStyleSheet("QSystemTrayIcon::message { font-size: 10pt; color: #2e3436; background: #c4a000; border: 1px solid #1f3c5d; }");
         self.metaLabel = QLabel()
 
 #        self.show()
         self.geo = self.geometry()
-        self.editAction = QAction(QIcon.fromTheme("preferences-system"), "edit Channels", triggered = self.edit_Channels)
+        self.editAction = QAction(QIcon.fromTheme("preferences-system"), "edit Channels", 
+                                    triggered = self.edit_Channels)
         self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "show Main Window", triggered = self.showMain)
         self.recordAction = QAction(QIcon.fromTheme("media-record"), "record channel", triggered = self.recordRadio1)
-        self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", triggered = self.stop_recording)
+        self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", 
+                                triggered = self.stop_recording)
 
     def getURLfromPLS(self, inURL):
         response = request.urlopen(inURL)
@@ -220,11 +210,14 @@ class MainWin(QMainWindow):
             self.leftMenu()
         elif buttons == Qt.RightButton:
             self.showMain()
+        #elif buttons == Qt.Wheel:
+        #    self.setVolumeWheel()
     
 
     def leftMenu(self):
         menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
         self.tray_menu = QMenu()
+        self.tray_menu.setStyleSheet("font-size: 7pt;")
         ##################
         for i in range(self.urlCombo.count() - 1):
             text = self.urlCombo.itemData(i, Qt.DisplayRole)
@@ -281,21 +274,24 @@ class MainWin(QMainWindow):
         self.writeSettings()
 
     def readSettings(self):
-        print("reading settings ...")
-        if self.settings.contains("pos"):
-            pos = self.settings.value("pos", QPoint(200, 200))
-            self.move(pos)
-        else:
-            self.move(0, 26)
-        if self.settings.contains("index"):
-            index = int(self.settings.value("index"))
-            self.urlCombo.setFocus()
-            self.urlCombo.setCurrentIndex(index)
-            if self.urlCombo.currentIndex() == 0:
+        ms = QDir.homePath() + "/.config/myRadio/settings.conf"
+        print(ms)
+        if QFile.exists(ms):
+            print("reading settings ...")
+            if self.settings.contains("pos"):
+                pos = self.settings.value("pos", QPoint(200, 200))
+                self.move(pos)
+            else:
+                self.move(0, 26)
+            if self.settings.contains("index"):
+                index = int(self.settings.value("index"))
+                self.urlCombo.setFocus()
+                self.urlCombo.setCurrentIndex(index)
+                if self.urlCombo.currentIndex() == 0:
+                    self.url_changed()
+            else:
+                self.urlCombo.setCurrentIndex(0)
                 self.url_changed()
-        else:
-            self.urlCombo.setCurrentIndex(0)
-            self.url_changed()
 
     def writeSettings(self):
         self.settings.setValue("pos", self.pos())
@@ -374,9 +370,11 @@ class MainWin(QMainWindow):
                    self.msglbl.setText("%s %s" % (trackInfo, trackInfo2))
                    self.metaLabel.setText("%s %s" % (trackInfo, trackInfo2))
                    self.trayIcon.showMessage("Radio", "%s %s" % (trackInfo, trackInfo2), self.tIcon, 5000)
+                   #os.system('DISPLAY=:0.0 /usr/bin/notify-send "myRadio" "' + "%s %s" % (trackInfo, trackInfo2) + '"')
                 else:
                     self.msglbl.setText(trackInfo)
                     self.trayIcon.showMessage("Radio", trackInfo, self.tIcon, 5000)
+                    #os.system('DISPLAY=:0.0 /usr/bin/notify-send "myRadio" "' + trackInfo + '"')
                     self.msglbl.adjustSize()
                     self.adjustSize()
             else:
@@ -446,6 +444,10 @@ class MainWin(QMainWindow):
         self.set_running_player()
         self.player.start()
         self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
+        
+    def setVolumeWheel(self):
+        print("wheel")
+        self.level_sld.setValue(self.level_sld.value() + 5)
 
  
     def set_running_player(self):
@@ -529,9 +531,9 @@ class MainWin(QMainWindow):
             print("saving audio")
 #            self.setWindowTitle("myRadio")
             infile = QFile(self.outfile)
-            path, _ = QFileDialog.getSaveFileName(self, "Save as...", QDir.homePath() + "/Musik/" \
-                                                                                        + self.urlCombo.currentText().replace("-", " ").replace(" - ", " ") + ".mp3",
-                "Audio (*.mp3)")
+            path, _ = QFileDialog.getSaveFileName(self, "Save as...", 
+                            QDir.homePath() + "/Musik/" + self.urlCombo.currentText()
+                            .replace("-", " ").replace(" - ", " ") + ".mp3", "Audio (*.mp3)")
             if (path != ""):
                 savefile = path
                 if QFile(savefile).exists:
@@ -691,6 +693,11 @@ QSlider::handle:horizontal:disabled {
 background: #eee;
 border-radius: 4px;
 }
+QSystemTrayIcon::message { 
+font-size: 7pt;
+color: #2e3436; 
+background: #c4a000; 
+border: 1px solid #1f3c5d; }
     """    
 
 
