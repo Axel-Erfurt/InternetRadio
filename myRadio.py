@@ -285,11 +285,13 @@ class MainWin(QMainWindow):
                 index = int(self.settings.value("index"))
                 self.urlCombo.setFocus()
                 self.urlCombo.setCurrentIndex(index)
-                if self.urlCombo.currentIndex() == 0:
-                    self.url_changed()
-            else:
-                self.urlCombo.setCurrentIndex(0)
                 self.url_changed()
+            else:
+                self.urlCombo.setCurrentIndex(1)
+                self.url_changed()
+        else:
+            self.urlCombo.setCurrentIndex(1)
+            self.url_changed()
 
     def writeSettings(self):
         self.settings.setValue("pos", self.pos())
