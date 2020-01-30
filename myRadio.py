@@ -5,7 +5,7 @@ import os
 import sys
 import wget
 import encodings
-from urllib import request
+import requests
 from PyQt5.QtCore import (Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, 
                             QStandardPaths, QFile, QDir, QSettings)
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, 
@@ -187,22 +187,22 @@ class MainWin(QMainWindow):
                                 triggered = self.stop_recording)
 
     def getURLfromPLS(self, inURL):
-        response = request.urlopen(inURL)
-        html = response.read().splitlines()
-        
-        t = str(html[1])
-        url = t.partition("=")[2].partition("'")[0]
-#        print(url)
+        print("detecting", inURL)
+        response = requests.get(inURL)
+        html = response.text.splitlines()
+        for x in html:
+            if "File" in x:
+                url = x.partition("=")[2]
+        print(url)
         return (url)
 
     def getURLfromM3U(self, inURL):
-        response = request.urlopen(inURL)
-        html = response.read().splitlines()
-        
-        t = str(html[1])
-        url = t.partition("'")[2].partition("'")[0]
+        print("detecting", inURL)
+        response = requests.get(inURL)
+        html = response.text.splitlines()
+        url = str(html[1])
         print(url)
-        return (url)
+        return(url)
 
     def on_systray_activated(self, i_reason):
         buttons = qApp.mouseButtons()
@@ -210,8 +210,6 @@ class MainWin(QMainWindow):
             self.leftMenu()
         elif buttons == Qt.RightButton:
             self.showMain()
-        #elif buttons == Qt.Wheel:
-        #    self.setVolumeWheel()
     
 
     def leftMenu(self):
@@ -388,6 +386,12 @@ class MainWin(QMainWindow):
                 ind = self.urlCombo.currentIndex()
                 url = self.radiolist[ind]
                 print("%s %s" %("playing", url))
+                
+                if url.endswith(".m3u"):
+                    url = self.getURLfromM3U(url)
+                if url.endswith(".pls"):
+                    url = self.getURLfromPLS(url)
+                
                 self.current_station = url
                 self.player.stop()
                 self.rec_btn.setVisible(True)
@@ -426,7 +430,7 @@ class MainWin(QMainWindow):
             url = self.getURLfromPLS(clip.text())
             self.current_station = url
         elif clip.text().endswith(".m3u") :
-            print("is a pls")
+            print("is a m3u")
             url = self.getURLfromM3U(clip.text())
             self.current_station = url
         print(self.current_station)
@@ -529,7 +533,6 @@ class MainWin(QMainWindow):
     def saveMovie(self):
         if self.is_recording == False:
             print("saving audio")
-#            self.setWindowTitle("myRadio")
             infile = QFile(self.outfile)
             path, _ = QFileDialog.getSaveFileName(self, "Save as...", 
                             QDir.homePath() + "/Musik/" + self.urlCombo.currentText()
@@ -542,8 +545,6 @@ class MainWin(QMainWindow):
                 if not infile.copy(savefile):
                     QMessageBox.warning(self, "Error",
                         "Cannot write file %s:\n%s." % (path, infile.errorString())) 
-#                self.deleteOutFile()
-#                self.process.setProcessState(0)
                 print("%s %s" % ("process state: ", str(self.process.state())))
                 if QFile(self.outfile).exists:
                     print("exists")
@@ -704,7 +705,6 @@ border: 1px solid #1f3c5d; }
 if __name__ == "__main__":
     app = QApplication([])
     win = MainWin()
-#    win.show()
-#    win.setVisible(False)
+    win.show()
     sys.exit(app.exec_())
-  
+    
