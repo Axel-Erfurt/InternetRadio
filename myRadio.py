@@ -184,6 +184,7 @@ class MainWin(QMainWindow):
         self.recordAction = QAction(QIcon.fromTheme("media-record"), "record channel", triggered = self.recordRadio1)
         self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", 
                                 triggered = self.stop_recording)
+        self.makeTrayMenu()
 
     def getURLfromPLS(self, inURL):
         print("detecting", inURL)
@@ -202,16 +203,8 @@ class MainWin(QMainWindow):
         url = str(html[1])
         print(url)
         return(url)
-
-    def on_systray_activated(self, i_reason):
-        buttons = qApp.mouseButtons()
-        if buttons == Qt.LeftButton:
-            self.leftMenu()
-        elif buttons == Qt.RightButton:
-            self.showMain()
-    
-
-    def leftMenu(self):
+        
+    def makeTrayMenu(self):
         menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
         self.tray_menu = QMenu()
         self.tray_menu.setStyleSheet("font-size: 7pt;")
@@ -223,14 +216,15 @@ class MainWin(QMainWindow):
             while True:
                 if line.startswith("--"):
                     print(line)
-                    chm = self.tray_menu.addMenu(line)
+                    chm = self.tray_menu.addMenu(line.replace("-- ", "").replace(" --", ""))
+                    chm.setIcon(self.tIcon)
                     break
                     continue
 
                 if  not line.startswith("--"):
                     ch = line.partition(",")[0]
                     data = line.partition(",")[2]
-                    print(f"{ch},{data}")
+                    #print(f"{ch},{data}")
                     
                     self.stationActs.append(QAction(QIcon.fromTheme("browser"), ch, triggered = self.openTrayStation))
                     self.stationActs[i].setData(str(i))
@@ -251,6 +245,16 @@ class MainWin(QMainWindow):
         self.tray_menu.addSeparator()
         exitAction = self.tray_menu.addAction(QIcon.fromTheme("application-exit"), "exit")
         exitAction.triggered.connect(self.exitApp)
+
+    def on_systray_activated(self, i_reason):
+        buttons = qApp.mouseButtons()
+        if buttons == Qt.LeftButton:
+            self.leftMenu()
+        elif buttons == Qt.RightButton:
+            self.showMain()
+    
+
+    def leftMenu(self):
         self.tray_menu.exec_(QCursor.pos())
 
     def showMain(self):
