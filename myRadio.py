@@ -3,7 +3,6 @@
 
 import os
 import sys
-import wget
 import encodings
 import requests
 from PyQt5.QtCore import (Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, 
@@ -216,20 +215,29 @@ class MainWin(QMainWindow):
         menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
         self.tray_menu = QMenu()
         self.tray_menu.setStyleSheet("font-size: 7pt;")
-        ##################
-        for i in range(self.urlCombo.count() - 1):
-            text = self.urlCombo.itemData(i, Qt.DisplayRole)
-            data = self.urlCombo.itemData(i, Qt.DisplayRole)
-            if text.startswith("--"):
-                self.stationActs.append(text)
-            else:
-                self.stationActs.append(QAction(QIcon.fromTheme("browser"), text, triggered = self.openTrayStation))
-                self.stationActs[i].setData(str(i))
-            if not text.startswith("--"):
-                self.tray_menu.addAction(self.stationActs[i])
-            else:
-                self.tray_menu.addSection(menuSectionIcon,text.replace("--", ""))
-        ##################
+        ##### submenus from categories ##########
+        b = self.radioStations.splitlines()
+        i = 0
+        for x in range(len(b)):
+            line = b[x]
+            while True:
+                if line.startswith("--"):
+                    print(line)
+                    chm = self.tray_menu.addMenu(line)
+                    break
+                    continue
+
+                if  not line.startswith("--"):
+                    ch = line.partition(",")[0]
+                    data = line.partition(",")[2]
+                    print(f"{ch},{data}")
+                    
+                    self.stationActs.append(QAction(QIcon.fromTheme("browser"), ch, triggered = self.openTrayStation))
+                    self.stationActs[i].setData(str(i))
+                    chm.addAction(self.stationActs[i])
+                    i += 1
+                    break
+        ####################################
         self.tray_menu.addSeparator()
         if self.is_recording == False:
             if not self.urlCombo.currentText().startswith("--"):
@@ -257,8 +265,9 @@ class MainWin(QMainWindow):
         action = self.sender()
         if action:
             ind = action.data()
+            name = action.text()     
+            self.urlCombo.setCurrentIndex(self.urlCombo.findText(name))
             print("%s %s %s" % ("switch to station:", ind, self.urlCombo.currentText()))
-            self.urlCombo.setCurrentIndex(int(ind))
 
     def exitApp(self):
         self.close()
@@ -268,27 +277,23 @@ class MainWin(QMainWindow):
                 None, 'Systray Message', 'Click Message')
 
     def closeEvent(self, e):
-        print("writing settings ...\nGoodbye ...")
         self.writeSettings()
+        print("writing settings ...\nGoodbye ...")
+        QApplication.quit()
+        
 
     def readSettings(self):
-        ms = QDir.homePath() + "/.config/myRadio/settings.conf"
-        print(ms)
-        if QFile.exists(ms):
-            print("reading settings ...")
-            if self.settings.contains("pos"):
-                pos = self.settings.value("pos", QPoint(200, 200))
-                self.move(pos)
-            else:
-                self.move(0, 26)
-            if self.settings.contains("index"):
-                index = int(self.settings.value("index"))
-                self.urlCombo.setFocus()
-                self.urlCombo.setCurrentIndex(index)
-                self.url_changed()
-            else:
-                self.urlCombo.setCurrentIndex(1)
-                self.url_changed()
+        print("reading settings ...")
+        if self.settings.contains("pos"):
+            pos = self.settings.value("pos", QPoint(200, 200))
+            self.move(pos)
+        else:
+            self.move(0, 26)
+        if self.settings.contains("index"):
+            index = int(self.settings.value("index"))
+            self.urlCombo.setFocus()
+            self.urlCombo.setCurrentIndex(index)
+            self.url_changed()
         else:
             self.urlCombo.setCurrentIndex(1)
             self.url_changed()
@@ -296,6 +301,7 @@ class MainWin(QMainWindow):
     def writeSettings(self):
         self.settings.setValue("pos", self.pos())
         self.settings.setValue("index", self.urlCombo.currentIndex())
+        self.settings.sync()
 
     def readStations(self):
         menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
@@ -323,7 +329,6 @@ class MainWin(QMainWindow):
 
     def edit_Channels(self):
         self.edWin = Editor()
-#        self.show()
         with open (self.radiofile, 'r') as f:
             t = f.read()
             f.close()
@@ -370,11 +375,9 @@ class MainWin(QMainWindow):
                    self.msglbl.setText("%s %s" % (trackInfo, trackInfo2))
                    self.metaLabel.setText("%s %s" % (trackInfo, trackInfo2))
                    self.trayIcon.showMessage("Radio", "%s %s" % (trackInfo, trackInfo2), self.tIcon, 5000)
-                   #os.system('DISPLAY=:0.0 /usr/bin/notify-send "myRadio" "' + "%s %s" % (trackInfo, trackInfo2) + '"')
                 else:
-                    self.msglbl.setText(trackInfo)
-                    self.trayIcon.showMessage("Radio", trackInfo, self.tIcon, 5000)
-                    #os.system('DISPLAY=:0.0 /usr/bin/notify-send "myRadio" "' + trackInfo + '"')
+                    self.msglbl.setText(trackInfo[:200])
+                    self.trayIcon.showMessage("Radio", trackInfo[:200], self.tIcon, 5000)
                     self.msglbl.adjustSize()
                     self.adjustSize()
             else:
@@ -496,7 +499,6 @@ class MainWin(QMainWindow):
             print(cmd)         
             self.is_recording = True   
             self.process.startDetached(cmd)
-#            wget.download (self.current_station, self.outfile)
             self.rec_btn.setVisible(False)
             self.stoprec_btn.setVisible(True)
         else:
@@ -509,7 +511,6 @@ class MainWin(QMainWindow):
             print(cmd)         
             self.is_recording = True   
             self.process.startDetached(cmd)
-#            wget.download (self.current_station, self.outfile)
             self.rec_btn.setVisible(False)
             self.stoprec_btn.setVisible(True)
         else:
