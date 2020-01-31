@@ -1,8 +1,7 @@
 # InternetRadio
 play and record internet radio stations
 
-- left click on systray icon -> select channel
-- right click on systray icon -> show/hide main window
+- right click on systray icon -> select channel
 
 ## Requirements:
 - PyQt5
@@ -20,8 +19,10 @@ Example:
 ```
 -- Information --
 MDR Aktuell,http://mdr-284340-0.cast.mdr.de/mdr/284340/0/mp3/low/stream.mp3
+-- Lokal --
 Antenne Thüringen,http://stream.antennethueringen.de/live/mp3-128/
 ```
+Each category is shown in the menu as a submenu with the associated channels.
 
 ### Installation Mint / Ubuntu
 
