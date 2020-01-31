@@ -173,18 +173,20 @@ class MainWin(QMainWindow):
         self.trayIcon = QSystemTrayIcon()
         self.trayIcon.setIcon(trayIcon)
         self.trayIcon.show()
-        self.trayIcon.activated.connect(self.on_systray_activated)
         self.metaLabel = QLabel()
 
-#        self.show()
         self.geo = self.geometry()
         self.editAction = QAction(QIcon.fromTheme("preferences-system"), "edit Channels", 
                                     triggered = self.edit_Channels)
-        self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "show Main Window", triggered = self.showMain)
+        self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "hide Main Window", triggered = self.showMain)
         self.recordAction = QAction(QIcon.fromTheme("media-record"), "record channel", triggered = self.recordRadio1)
         self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", 
                                 triggered = self.stop_recording)
         self.makeTrayMenu()
+        if QSystemTrayIcon.isSystemTrayAvailable():
+            print("QSystemTrayIcon is available")
+        else:
+            print("QSystemTrayIcon is not available")
 
     def getURLfromPLS(self, inURL):
         print("detecting", inURL)
@@ -215,7 +217,6 @@ class MainWin(QMainWindow):
             line = b[x]
             while True:
                 if line.startswith("--"):
-                    print(line)
                     chm = self.tray_menu.addMenu(line.replace("-- ", "").replace(" --", ""))
                     chm.setIcon(self.tIcon)
                     break
@@ -224,7 +225,6 @@ class MainWin(QMainWindow):
                 if  not line.startswith("--"):
                     ch = line.partition(",")[0]
                     data = line.partition(",")[2]
-                    #print(f"{ch},{data}")
                     
                     self.stationActs.append(QAction(QIcon.fromTheme("browser"), ch, triggered = self.openTrayStation))
                     self.stationActs[i].setData(str(i))
@@ -245,17 +245,7 @@ class MainWin(QMainWindow):
         self.tray_menu.addSeparator()
         exitAction = self.tray_menu.addAction(QIcon.fromTheme("application-exit"), "exit")
         exitAction.triggered.connect(self.exitApp)
-
-    def on_systray_activated(self, i_reason):
-        buttons = qApp.mouseButtons()
-        if buttons == Qt.LeftButton:
-            self.leftMenu()
-        elif buttons == Qt.RightButton:
-            self.showMain()
-    
-
-    def leftMenu(self):
-        self.tray_menu.exec_(QCursor.pos())
+        self.trayIcon.setContextMenu(self.tray_menu)
 
     def showMain(self):
         if self.isVisible() ==False:
