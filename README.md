@@ -32,3 +32,5 @@ September 6, 2019 added Channel Editor
 ![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/radio2.png)
 
 [Linux App 64bit Download](https://www.dropbox.com/s/zcw2lmrkqmpcto0/myRadio64.tar.gz?dl=1)
+
+letztes Update 31.Januar 2020 22:24 Uhr
