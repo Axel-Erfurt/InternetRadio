@@ -15,6 +15,7 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QCursor, QStandardItem
 from PyQt5.Qt import QClipboard
+import RadioFinder
 
 changed = pyqtSignal(QMimeData)
 btnwidth = 80
@@ -175,6 +176,8 @@ class MainWin(QMainWindow):
         self.metaLabel = QLabel()
 
         self.geo = self.geometry()
+        self.findRadioAction = QAction(QIcon.fromTheme("edit-find"), "find Radio Channels", 
+                                    triggered = self.findRadio)
         self.editAction = QAction(QIcon.fromTheme("preferences-system"), "edit Channels", 
                                     triggered = self.edit_Channels)
         self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "hide Main Window", triggered = self.showMain)
@@ -196,6 +199,11 @@ class MainWin(QMainWindow):
         elif self.player.state() == QMediaPlayer.PlayingState:
             self.togglePlayerAction.setText("stop playing")
             self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
+            
+    def findRadio(self):
+        self.fr = RadioFinder.MainWindow()
+        self.fr.show()
+        self.fr.findfield.setFocus()
 
             
     def togglePlay(self):          
@@ -265,6 +273,7 @@ class MainWin(QMainWindow):
         self.tray_menu.addAction(self.showWinAction)
         self.tray_menu.addSeparator()
         self.tray_menu.addAction(self.notifAction)
+        self.tray_menu.addAction(self.findRadioAction)
         self.tray_menu.addSeparator()
         exitAction = self.tray_menu.addAction(QIcon.fromTheme("application-exit"), "exit")
         exitAction.triggered.connect(self.exitApp)
@@ -316,13 +325,9 @@ class MainWin(QMainWindow):
             self.move(pos)
         else:
             self.move(0, 26)
-        if self.settings.contains("index"):
-            index = int(self.settings.value("index"))
-            self.urlCombo.setFocus()
-            self.urlCombo.setCurrentIndex(index)
-            self.url_changed()
-        else:
-            self.urlCombo.setCurrentIndex(1)
+        if self.settings.contains("lastChannel"):
+            lch = self.settings.value("lastChannel")
+            self.urlCombo.setCurrentIndex(self.urlCombo.findText(lch))
             self.url_changed()
         if self.settings.contains("notifications"):
             self.notificationsEnabled = self.settings.value("notifications")
@@ -335,6 +340,7 @@ class MainWin(QMainWindow):
     def writeSettings(self):
         self.settings.setValue("pos", self.pos())
         self.settings.setValue("index", self.urlCombo.currentIndex())
+        self.settings.setValue("lastChannel", self.urlCombo.currentText())
         self.settings.setValue("notifications", self.notificationsEnabled)
         self.settings.sync()
 
@@ -354,7 +360,7 @@ class MainWin(QMainWindow):
                 self.channels.append(t)
             for lines in self.radioStations.split("\n"):
                 if not lines.startswith("--"):
-                    self.urlCombo.addItem(QIcon.fromTheme("browser"), lines.partition(",")[0])
+                    self.urlCombo.addItem(QIcon.fromTheme("browser"), lines.partition(",")[0],Qt.UserRole - 1)
                 else:
                     m = QStandardItem(menuSectionIcon,lines.partition(",")[0])
                     m.setEnabled(False)
@@ -758,6 +764,6 @@ border: 1px solid #1f3c5d; }
 if __name__ == "__main__":
     app = QApplication([])
     win = MainWin()
-    win.show()
+    #win.show()
     sys.exit(app.exec_())
     
