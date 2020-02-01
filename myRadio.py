@@ -179,6 +179,8 @@ class MainWin(QMainWindow):
                                     triggered = self.edit_Channels)
         self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "hide Main Window", triggered = self.showMain)
         self.notifAction = QAction(QIcon.fromTheme("dialog-information"), "disable Notifications", triggered = self.toggleNotif)
+        self.togglePlayerAction = QAction("stop playing", triggered = self.togglePlay)
+        self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
         self.recordAction = QAction(QIcon.fromTheme("media-record"), "record channel", triggered = self.recordRadio1)
         self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", 
                                 triggered = self.stop_recording)
@@ -188,6 +190,23 @@ class MainWin(QMainWindow):
             print("QSystemTrayIcon is available")
         else:
             print("QSystemTrayIcon is not available")
+        if self.player.state() == QMediaPlayer.StoppedState:
+            self.togglePlayerAction.setText("start playing")
+            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-start"))            
+        elif self.player.state() == QMediaPlayer.PlayingState:
+            self.togglePlayerAction.setText("stop playing")
+            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
+
+            
+    def togglePlay(self):          
+        if self.togglePlayerAction.text() == "stop playing":
+            self.stop_preview()
+            self.togglePlayerAction.setText("start playing")
+            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-start"))
+        else:
+            self.playRadioStation()
+            self.togglePlayerAction.setText("stop playing")
+            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
 
     def getURLfromPLS(self, inURL):
         print("detecting", inURL)
@@ -210,6 +229,7 @@ class MainWin(QMainWindow):
     def makeTrayMenu(self):
         menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
         self.tray_menu = QMenu()
+        self.tray_menu.addAction(self.togglePlayerAction)
         self.tray_menu.setStyleSheet("font-size: 7pt;")
         ##### submenus from categories ##########
         b = self.radioStations.splitlines()
@@ -421,6 +441,12 @@ class MainWin(QMainWindow):
                 self.play_btn.setVisible(True)
                 self.pause_btn.setVisible(True)
                 self.playRadioStation()
+                if self.togglePlayerAction.text() == "stop playing":
+                    self.togglePlayerAction.setText("start playing")
+                    self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-start"))
+                else:
+                    self.togglePlayerAction.setText("stop playing")
+                    self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
             else:
                 self.rec_btn.setVisible(False)
                 self.stop_btn.setVisible(False)
@@ -432,6 +458,8 @@ class MainWin(QMainWindow):
             self.set_running_player()
             self.player.start()
             self.pause_btn.setFocus()
+            self.togglePlayerAction.setText("stop playing")
+            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
             return
  
         if not self.current_station:
@@ -442,6 +470,7 @@ class MainWin(QMainWindow):
         self.player.start()
         self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
         self.setWindowTitle(self.urlCombo.currentText())
+
 
     def playURL(self):
         clip = QApplication.clipboard()
@@ -497,6 +526,9 @@ class MainWin(QMainWindow):
         self.stop_btn.setEnabled(False)
         self.rec_btn.setEnabled(False)
         self.msglbl.setText("Stopped")
+        self.togglePlayerAction.setText("start playing")
+        self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-start"))
+
  
     def set_sound_level(self, level):
         self.player.set_sound_level(level)
@@ -612,12 +644,13 @@ class RadioPlayer(QMediaPlayer):
         self.is_running = False
         self.is_on_pause = True
         self.pause()
+
  
     def finish(self):
         self.is_running = False
         self.is_on_pause = False
         self.stop()
- 
+            
     def set_sound_level(self, level):
         self.auto_sound_level = False
         self.setVolume(level)
