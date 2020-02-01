@@ -66,6 +66,7 @@ class MainWin(QMainWindow):
         self.channels = []
         self.radiofile = ""
         self.radioStations = ""
+        self.notificationsEnabled = True
         self.wg = QWidget()
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(10 ,2, 10, 2)
@@ -165,8 +166,6 @@ class MainWin(QMainWindow):
         self.move(0, 30)
         self.findExecutable()
 
-        self.readSettings()
-
         # Init tray icon
         trayIcon = QIcon(self.tIcon)
 
@@ -179,9 +178,11 @@ class MainWin(QMainWindow):
         self.editAction = QAction(QIcon.fromTheme("preferences-system"), "edit Channels", 
                                     triggered = self.edit_Channels)
         self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "hide Main Window", triggered = self.showMain)
+        self.notifAction = QAction(QIcon.fromTheme("dialog-information"), "disable Notifications", triggered = self.toggleNotif)
         self.recordAction = QAction(QIcon.fromTheme("media-record"), "record channel", triggered = self.recordRadio1)
         self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", 
                                 triggered = self.stop_recording)
+        self.readSettings()
         self.makeTrayMenu()
         if QSystemTrayIcon.isSystemTrayAvailable():
             print("QSystemTrayIcon is available")
@@ -243,6 +244,8 @@ class MainWin(QMainWindow):
         self.tray_menu.addAction(self.editAction)
         self.tray_menu.addAction(self.showWinAction)
         self.tray_menu.addSeparator()
+        self.tray_menu.addAction(self.notifAction)
+        self.tray_menu.addSeparator()
         exitAction = self.tray_menu.addAction(QIcon.fromTheme("application-exit"), "exit")
         exitAction.triggered.connect(self.exitApp)
         self.trayIcon.setContextMenu(self.tray_menu)
@@ -254,6 +257,16 @@ class MainWin(QMainWindow):
         elif self.isVisible() ==True:
             self.showWinAction.setText("show Main Window")
             self.setVisible(False)
+            
+    def toggleNotif(self):
+        if self.notifAction.text() == "disable Notifications":
+            self.notifAction.setText("enable Notifications")
+            self.notificationsEnabled = False
+        else:
+            self.notifAction.setText("enable Notifications")
+            self.notifAction.setText("disable Notifications")
+            self.notificationsEnabled = True
+        print("Notifications", self.notificationsEnabled )
 
     def openTrayStation(self):
         action = self.sender()
@@ -291,10 +304,18 @@ class MainWin(QMainWindow):
         else:
             self.urlCombo.setCurrentIndex(1)
             self.url_changed()
+        if self.settings.contains("notifications"):
+            self.notificationsEnabled = self.settings.value("notifications")
+            if self.settings.value("notifications") == 'false':
+                self.notifAction.setText("enable Notifications")
+            else:
+                self.notifAction.setText("disable Notifications")
+        print("Notifications", self.notificationsEnabled)
 
     def writeSettings(self):
         self.settings.setValue("pos", self.pos())
         self.settings.setValue("index", self.urlCombo.currentIndex())
+        self.settings.setValue("notifications", self.notificationsEnabled)
         self.settings.sync()
 
     def readStations(self):
@@ -366,12 +387,14 @@ class MainWin(QMainWindow):
             trackInfo2 = (self.player.metaData("Comment"))
             if not trackInfo == None:
                 if not trackInfo2 == None:
-                   self.msglbl.setText("%s %s" % (trackInfo, trackInfo2))
-                   self.metaLabel.setText("%s %s" % (trackInfo, trackInfo2))
-                   self.trayIcon.showMessage("Radio", "%s %s" % (trackInfo, trackInfo2), self.tIcon, 5000)
+                    self.msglbl.setText("%s %s" % (trackInfo, trackInfo2))
+                    self.metaLabel.setText("%s %s" % (trackInfo, trackInfo2))
+                    if self.notificationsEnabled == True:
+                        self.trayIcon.showMessage("Radio", "%s %s" % (trackInfo, trackInfo2), self.tIcon, 5000)
                 else:
                     self.msglbl.setText(trackInfo[:200])
-                    self.trayIcon.showMessage("Radio", trackInfo[:200], self.tIcon, 5000)
+                    if self.notificationsEnabled == True:
+                        self.trayIcon.showMessage("Radio", trackInfo[:200], self.tIcon, 5000)
                     self.msglbl.adjustSize()
                     self.adjustSize()
             else:
