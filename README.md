@@ -38,8 +38,6 @@ letztes Update 31.Januar 2020 22:24 Uhr
 
 __RadioSearch.py__
 
-needs constants
-
-`pip3 install --user constants`
-
 find Radio Stations
+
+(now also included in myRadio)
