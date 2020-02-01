@@ -35,3 +35,7 @@ September 6, 2019 added Channel Editor
 [Linux App 64bit Download](https://www.dropbox.com/s/zcw2lmrkqmpcto0/myRadio64.tar.gz?dl=1)
 
 letztes Update 31.Januar 2020 22:24 Uhr
+
+__RadioSearch.py__
+
+find Radio Stations
