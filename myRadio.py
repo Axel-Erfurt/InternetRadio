@@ -5,6 +5,7 @@ import os
 import sys
 import encodings
 import requests
+from subprocess import call
 from PyQt5.QtCore import (Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, 
                             QStandardPaths, QFile, QDir, QSettings)
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, 
@@ -14,47 +15,11 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatu
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QCursor, QStandardItem
-from PyQt5.Qt import QClipboard
+from PyQt5.Qt import QDesktopServices
 import RadioFinder
 
 changed = pyqtSignal(QMimeData)
 btnwidth = 80
-
-class Editor(QMainWindow):
-    def __init__(self):
-        super(Editor, self).__init__()
-        self.isModified = False
-        self.radio_editor = QPlainTextEdit(self)
-        self.radio_editor.textChanged.connect(self.setModified)
-        self.close_btn = QPushButton("Close", self)
-        self.close_btn.setFixedWidth(btnwidth)
-        self.close_btn.setIcon(QIcon.fromTheme("window-close"))
-        self.close_btn.clicked.connect(self.closeWin)
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.radio_editor)
-        self.layout.addWidget(self.close_btn)
-        self.wid = QWidget()
-        self.wid.setLayout(self.layout)
-        self.setCentralWidget(self.wid)
-        self.setGeometry(0, 0, 800, 600)
-        self.show()
-
-    def closeWin(self):
-        if self.isModified == True:
-            with open(MainWin().radiofile, 'w') as f:
-                if sys.version[0] == "2":
-                    f.write(self.radio_editor.toPlainText().encode('utf8', 'replace'))
-                elif sys.version[0] == "3":
-                    f.write(str(self.radio_editor.toPlainText()))
-                f.close()
-                print("saved, closing editor")
-                os.execv(sys.argv[0], sys.argv)
-        else:
-            print("closing editor")
-            self.hide()
-
-    def setModified(self):
-        self.isModified = True
 
 
 class MainWin(QMainWindow):
@@ -180,7 +145,7 @@ class MainWin(QMainWindow):
                                     triggered = self.findRadio)
         self.editAction = QAction(QIcon.fromTheme("preferences-system"), "edit Channels", 
                                     triggered = self.edit_Channels)
-        self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "hide Main Window", triggered = self.showMain)
+        self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "show Main Window", triggered = self.showMain)
         self.notifAction = QAction(QIcon.fromTheme("dialog-information"), "disable Notifications", triggered = self.toggleNotif)
         self.togglePlayerAction = QAction("stop playing", triggered = self.togglePlay)
         self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
@@ -200,10 +165,10 @@ class MainWin(QMainWindow):
             self.togglePlayerAction.setText("stop playing")
             self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
             
+            
     def findRadio(self):
-        self.fr = RadioFinder.MainWindow()
-        self.fr.show()
-        self.fr.findfield.setFocus()
+        fr = os.path.join(os.path.dirname(sys.argv[0]), "RadioFinder.py")
+        call(["python3", fr])
 
             
     def togglePlay(self):          
@@ -369,12 +334,8 @@ class MainWin(QMainWindow):
         self.urlCombo.setCurrentIndex(0)
 
     def edit_Channels(self):
-        self.edWin = Editor()
-        with open (self.radiofile, 'r') as f:
-            t = f.read()
-            f.close()
-        self.edWin.radio_editor.setPlainText(t)
-        self.edWin.isModified = False
+        QDesktopServices.openUrl(QUrl.fromLocalFile(self.radiofile))
+
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_F5:
