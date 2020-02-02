@@ -302,13 +302,16 @@ class MainWindow(QMainWindow):
         self.helpAction = QAction(QIcon.fromTheme("help-info"), "Help", self, shortcut="F1", triggered=self.showHelp)
         self.addAction(self.helpAction)
         self.statusBar().showMessage("Welcome", 0)
+        self.modified = False
         
     def closeEvent(self, event):
-        self.msgbox("new channels available after restarting myRadio")
+        if self.modified == True:
+            self.statusBar().showMessage("saved!", 0)
+            self.msgbox("new channels available after restarting myRadio")
         
     def addToRadiolist(self):
         text = ""
-        filename = os.path.dirname(sys.argv[0]) + os.sep + "myradio.txt"
+        filename = os.path.join(os.path.dirname(sys.argv[0]), "myradio.txt")
         print(filename)
         with open(filename, 'r') as f:
             text = f.read()
@@ -347,6 +350,8 @@ class MainWindow(QMainWindow):
             f.write(text)
             f.write('\n\n')
             f.close()
+            self.modified = True
+            
             
     def msgbox(self, message):
         msg = QMessageBox(1, "Information", message, QMessageBox.Ok)
@@ -502,7 +507,7 @@ class MainWindow(QMainWindow):
                 with open(path, 'w') as f:
                     f.write(s)
                     f.close()
-                    self.statusBar().showMessage("saved!", 0)
+                    
 
     def savePlaylist(self):
         if not self.field.toPlainText() == "":
@@ -571,3 +576,4 @@ if __name__ == '__main__':
     mainWin.show()
     mainWin.findfield.setFocus()
     sys.exit(app.exec_())
+    
