@@ -23,7 +23,6 @@ import sys
 from xml.etree import ElementTree
 from urllib.parse import urljoin
 
-#from constants import endpoints, BASE_URL
 
 BASE_URL = "http://www.radio-browser.info/webservice/"
 
