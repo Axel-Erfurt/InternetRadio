@@ -334,7 +334,10 @@ class MainWin(QMainWindow):
         self.urlCombo.setCurrentIndex(0)
 
     def edit_Channels(self):
+        self.show()
+        self.msgbox("changes are available after restarting myRadio")
         QDesktopServices.openUrl(QUrl.fromLocalFile(self.radiofile))
+        self.hide()
 
 
     def keyPressEvent(self, e):
@@ -346,7 +349,8 @@ class MainWin(QMainWindow):
             e.accept()
 
     def msgbox(self, message):
-        QMessageBox.warning(self, "Message", message)
+        msg = QMessageBox(1, "Information", message, QMessageBox.Ok)
+        msg.exec()
 
     def findExecutable(self):
         wget = QStandardPaths.findExecutable("wget")
@@ -435,6 +439,7 @@ class MainWin(QMainWindow):
         self.player.set_media(self.current_station)
         self.set_running_player()
         self.player.start()
+        self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
         self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
         self.setWindowTitle(self.urlCombo.currentText())
 
@@ -508,33 +513,22 @@ class MainWin(QMainWindow):
         self.level_lbl.setText("Volume " + str(level))
         self.level_sld.blockSignals(False)
 
-    def recordRadio(self):
+    def recordRadio1(self):
         if self.is_recording == False:
             self.deleteOutFile()
             cmd = ("wget -q "  + self.current_station + " -O " + self.outfile)
             print(cmd)         
             self.is_recording = True   
             self.process.startDetached(cmd)
+            self.recordAction.setText("stop recording")
+            self.recordAction.setIcon(QIcon.fromTheme("media-playback-stop"))
             self.rec_btn.setVisible(False)
             self.stoprec_btn.setVisible(True)
         else:
-            self.msgbox("Recording is still in progress")
-
-    def recordRadio1(self):
-        if self.is_recording == False:
-            self.deleteOutFile()
-            cmd = ("timeout 1h wget -q "  + self.current_station + " -O " + self.outfile)
-            print(cmd)         
-            self.is_recording = True   
-            self.process.startDetached(cmd)
-            self.rec_btn.setVisible(False)
-            self.stoprec_btn.setVisible(True)
-        else:
-            self.msgbox("Recording is still in progress")
+            self.stop_recording()
 
     def stop_recording(self):
         if self.is_recording == True:
-            self.showMain()
             self.process.close()
             print("stopping recording")
             self.is_recording = False
@@ -545,6 +539,8 @@ class MainWin(QMainWindow):
             self.saveMovie()
             self.stoprec_btn.setVisible(False)
             self.rec_btn.setVisible(True)
+            self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
+            self.recordAction.setIcon(QIcon.fromTheme("media-record"))
             self.showMain()
         else:
             self.msgbox("Recording is not in progress")
