@@ -272,6 +272,7 @@ class MainWin(QMainWindow):
 
     def exitApp(self):
         self.close()
+        QApplication.quit()
 
     def message(self):
         QMessageBox.information(
