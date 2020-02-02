@@ -30,9 +30,9 @@ __Installation Mint / Ubuntu__
 
 __Deinstallation__
 
-`rm /home/brian/.local/share/applications/InternetRadio.desktop`
+`rm ~/.local/share/applications/InternetRadio.desktop`
 
-`rm -rf /home/brian/.local/share/InternetRadio`
+`rm -rf ~/.local/share/InternetRadio`
 
 ![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/radio2.png)
 
