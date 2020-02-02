@@ -24,11 +24,15 @@ Antenne Thüringen,http://stream.antennethueringen.de/live/mp3-128/
 ```
 Each category is shown in the menu as a submenu with the associated channels.
 
-### Installation Mint / Ubuntu
+__Installation Mint / Ubuntu__
 
 > wget 'https://raw.githubusercontent.com/Axel-Erfurt/InternetRadio/master/InternetRadioInstall.sh' -O ~/Downloads/InternetRadioInstall.sh && chmod +x ~/Downloads/InternetRadioInstall.sh && ~/Downloads/InternetRadioInstall.sh
 
-September 6, 2019 added Channel Editor
+__Deinstallation__
+
+`rm /home/brian/.local/share/applications/InternetRadio.desktop`
+
+`rm -rf /home/brian/.local/share/InternetRadio`
 
 ![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/radio2.png)
 
