@@ -1,13 +1,57 @@
 # InternetRadio
 play and record internet radio stations
 
-- right click on systray icon -> select channel
+![flag](https://github.githubassets.com/images/icons/emoji/unicode/1f1e9-1f1ea.png)
+deutsche Anleitung -> [UbuntuUsers Howto myRadio](https://wiki.ubuntuusers.de/Baustelle/Howto/myRadio/)
 
-## Requirements:
+__Requirements:__
 - PyQt5
 - wget
 
-### Channel Editor
+## Usage ##
+It is operated via the context menu of the tray icon or the main window.
+
+- right click on systray icon -> category -> select channel
+
+***find radio channels***
+
+opens a window where you can search for radio stations.
+
+A highlighted entry can be added to the channel list in MyRadio via the context menu add to MyRadio List.
+
+In the dialog box  choose a category or create a new category by typing a new name.
+
+Under this category, the channel is then displayed in MyRadio menu.
+
+***Notifications enable / disable notifications***
+
+on / off for displaying metadata (for example, song title and artist, News)
+
+***show Main Window / hide Main Window***
+
+hide  / show Main Window
+
+***stop playing***
+
+Stops playback
+
+***start playing***
+
+Starts playback
+
+***record Channel: station name***
+
+Recording of the current channel is started
+
+***stop recording***
+
+Recording of the current channel is stopped. A dialog box for saving the recording will be shown.
+
+***exit***
+
+leave application
+
+__Channel Editor__
 
 Format:
 ```
