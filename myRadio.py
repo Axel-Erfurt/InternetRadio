@@ -36,7 +36,6 @@ class MainWin(QMainWindow):
         self.wg = QWidget()
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(10 ,2, 10, 2)
-        self.player = QMediaPlayer(None, QMediaPlayer.StreamPlayback)
         self.layout1 = QHBoxLayout()
 
         self.outfile = QStandardPaths.standardLocations(QStandardPaths.TempLocation)[0] + "/radio.mp3"
@@ -103,6 +102,7 @@ class MainWin(QMainWindow):
         self.layout.addWidget(self.level_lbl)
         self.player = RadioPlayer(self)
         self.player.metaDataChanged.connect(self.metaDataChanged)
+        self.player.error.connect(self.handleError)
         self.play_btn.clicked.connect(self.playRadioStation)
         self.pause_btn.clicked.connect(self.pause_preview)
         self.stop_btn.clicked.connect(self.stop_preview)
@@ -130,7 +130,6 @@ class MainWin(QMainWindow):
         self.setMinimumHeight(180)
         self.setFixedWidth(460)
         self.move(0, 30)
-        self.findExecutable()
 
         # Init tray icon
         trayIcon = QIcon(self.tIcon)
@@ -138,6 +137,7 @@ class MainWin(QMainWindow):
         self.trayIcon = QSystemTrayIcon()
         self.trayIcon.setIcon(trayIcon)
         self.trayIcon.show()
+                
         self.metaLabel = QLabel()
 
         self.geo = self.geometry()
@@ -152,6 +152,7 @@ class MainWin(QMainWindow):
         self.recordAction = QAction(QIcon.fromTheme("media-record"), "record channel", triggered = self.recordRadio1)
         self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", 
                                 triggered = self.stop_recording)
+        self.findExecutable()
         self.readSettings()
         self.makeTrayMenu()
         if QSystemTrayIcon.isSystemTrayAvailable():
@@ -169,8 +170,13 @@ class MainWin(QMainWindow):
     def findRadio(self):
         fr = os.path.join(os.path.dirname(sys.argv[0]), "RadioFinder.py")
         call(["python3", fr])
-
-            
+        
+        
+    def handleError(self):
+        print("Error Player: " + self.player.errorString())
+        self.trayIcon.showMessage("Error", self.player.errorString(), 2000)
+        self.msglbl.setText(f"Error:\n{self.player.errorString()}")
+           
     def togglePlay(self):          
         if self.togglePlayerAction.text() == "stop playing":
             self.stop_preview()
@@ -195,7 +201,11 @@ class MainWin(QMainWindow):
         print("detecting", inURL)
         response = requests.get(inURL)
         html = response.text.splitlines()
-        url = str(html[1])
+        print(html)
+        if len(html) > 1:
+            url = str(html[1])
+        else:
+            url = str(html[0])
         print(url)
         return(url)
         
@@ -335,11 +345,8 @@ class MainWin(QMainWindow):
         self.urlCombo.setCurrentIndex(0)
 
     def edit_Channels(self):
-        self.show()
-        self.msgbox("changes are available after restarting myRadio")
+        self.trayIcon.showMessage("Note", "changes are available after restarting myRadio", 2000)
         QDesktopServices.openUrl(QUrl.fromLocalFile(self.radiofile))
-        self.hide()
-
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_F5:
@@ -349,18 +356,17 @@ class MainWin(QMainWindow):
         else:
             e.accept()
 
-    def msgbox(self, message):
-        msg = QMessageBox(1, "Information", message, QMessageBox.Ok)
-        msg.exec()
-
     def findExecutable(self):
         wget = QStandardPaths.findExecutable("wget")
+        print("wget:", wget)
         if wget != "":
             print("%s %s %s" % ("wget found at ", wget, " *** recording enabled"))
             self.msglbl.setText("recording enabled")
+            self.trayIcon.showMessage("Note", "wget found\nrecording enabled", 2000)
             self.recording_enabled = True
         else:
-            self.msgbox("wget not found\nrecording disabled")
+            self.trayIcon.showMessage("Note", "wget not found\nrecording disabled", 2000)
+            print("wget not found\nrecording disabled")
             self.recording_enabled = False
 
     def remove_last_line_from_string(self, s):
@@ -552,7 +558,7 @@ class MainWin(QMainWindow):
             self.recordAction.setIcon(QIcon.fromTheme("media-record"))
             self.showMain()
         else:
-            self.msgbox("Recording is not in progress")
+            self.trayIcon.showMessage("Note", "Recording is not in progress", 2000)
 
     def saveMovie(self):
         if self.is_recording == False:
