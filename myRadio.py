@@ -387,12 +387,14 @@ class MainWin(QMainWindow):
                     self.metaLabel.setText("%s %s" % (new_trackInfo, trackInfo2))
                     if self.notificationsEnabled == True:
                         self.trayIcon.showMessage("Radio", "%s %s" % (new_trackInfo, trackInfo2), self.tIcon, 5000)
-                        if self.notificationsEnabled == True:
-                            self.trayIcon.showMessage("Radio", "%s %s" % (new_trackInfo, trackInfo2), self.tIcon, 5000)
+                    else:
+                        self.trayIcon.setToolTip("%s %s" % (new_trackInfo, trackInfo2))
                 else:
                     self.msglbl.setText(new_trackInfo)
                     if self.notificationsEnabled == True:
                         self.trayIcon.showMessage("Radio", new_trackInfo, self.tIcon, 5000)
+                    else:
+                        self.trayIcon.setToolTip(new_trackInfo)
                     self.msglbl.adjustSize()
                     self.adjustSize()
             else:
@@ -405,7 +407,6 @@ class MainWin(QMainWindow):
             if not self.urlCombo.currentText().startswith("--"):
                 ind = self.urlCombo.currentIndex()
                 url = self.radiolist[ind]
-                print("%s %s" %("playing", url))
                 
                 if url.endswith(".m3u"):
                     url = self.getURLfromM3U(url)
@@ -418,6 +419,7 @@ class MainWin(QMainWindow):
                 self.stop_btn.setVisible(True)
                 self.play_btn.setVisible(True)
                 self.pause_btn.setVisible(True)
+                print("%s %s" %("playing", url))
                 self.playRadioStation()
                 if self.togglePlayerAction.text() == "stop playing":
                     self.togglePlayerAction.setText("start playing")
