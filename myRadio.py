@@ -375,18 +375,21 @@ class MainWin(QMainWindow):
 
     def metaDataChanged(self):
         if self.player.isMetaDataAvailable():
+            trackinfo = ""
             trackInfo = (self.player.metaData("Title"))
             trackInfo2 = (self.player.metaData("Comment"))
             if not trackInfo == None:
                 if not trackInfo2 == None:
-                    self.msglbl.setText("%s %s" % (trackInfo, trackInfo2))
+                    self.msglbl.setText("%s %s" % (trackInfo, trackInfo2)[:200])
                     self.metaLabel.setText("%s %s" % (trackInfo, trackInfo2))
                     if self.notificationsEnabled == True:
                         self.trayIcon.showMessage("Radio", "%s %s" % (trackInfo, trackInfo2), self.tIcon, 5000)
                 else:
-                    self.msglbl.setText(trackInfo[:200])
+                    if len(trackInfo) > 100:
+                        trackinfo = str(trackInfo).partition('{"title":"')[2].partition('","')[0].replace('\n', " ")
+                    self.msglbl.setText(trackinfo[:200])
                     if self.notificationsEnabled == True:
-                        self.trayIcon.showMessage("Radio", trackInfo[:200], self.tIcon, 5000)
+                        self.trayIcon.showMessage("Radio", trackinfo[:200], self.tIcon, 5000)
                     self.msglbl.adjustSize()
                     self.adjustSize()
             else:
@@ -550,7 +553,7 @@ class MainWin(QMainWindow):
         if self.is_recording == False:
             print("saving audio")
             infile = QFile(self.outfile)
-            path, _ = QFileDialog.getSaveFileName(self, "Save as...", 
+            path, _ = QFileDialog.getSaveFileName(None, "Save as...", 
                             QDir.homePath() + "/Musik/" + self.urlCombo.currentText()
                             .replace("-", " ").replace(" - ", " ") + ".mp3", "Audio (*.mp3)")
             if (path != ""):
