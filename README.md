@@ -1,7 +1,7 @@
 # InternetRadio
 play and record internet radio stations
 
-![flag](https://github.githubassets.com/images/icons/emoji/unicode/1f1e9-1f1ea.png)
+![flag](https://github.com/Axel-Erfurt/InternetRadio/blob/master/de_flag.png)
 deutsche Anleitung -> [UbuntuUsers Howto myRadio](https://wiki.ubuntuusers.de/Baustelle/Howto/myRadio/)
 
 __Requirements:__
