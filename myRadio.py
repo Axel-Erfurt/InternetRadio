@@ -375,21 +375,24 @@ class MainWin(QMainWindow):
 
     def metaDataChanged(self):
         if self.player.isMetaDataAvailable():
-            trackinfo = ""
             trackInfo = (self.player.metaData("Title"))
             trackInfo2 = (self.player.metaData("Comment"))
+            new_trackInfo = ""
+            if not trackInfo == None and len(trackInfo) > 100:
+                new_trackInfo = str(trackInfo).partition('{"title":"')[2].partition('","')[0].replace('\n', " ")[:200]
+            else:
+                new_trackInfo = str(trackInfo)
             if not trackInfo == None:
                 if not trackInfo2 == None:
-                    self.msglbl.setText("%s %s" % (trackInfo, trackInfo2)[:200])
-                    self.metaLabel.setText("%s %s" % (trackInfo, trackInfo2))
+                    self.metaLabel.setText("%s %s" % (new_trackInfo, trackInfo2))
                     if self.notificationsEnabled == True:
-                        self.trayIcon.showMessage("Radio", "%s %s" % (trackInfo, trackInfo2), self.tIcon, 5000)
+                        self.trayIcon.showMessage("Radio", "%s %s" % (new_trackInfo, trackInfo2), self.tIcon, 5000)
+                        if self.notificationsEnabled == True:
+                            self.trayIcon.showMessage("Radio", "%s %s" % (new_trackInfo, trackInfo2), self.tIcon, 5000)
                 else:
-                    if len(trackInfo) > 100:
-                        trackinfo = str(trackInfo).partition('{"title":"')[2].partition('","')[0].replace('\n', " ")
-                    self.msglbl.setText(trackinfo[:200])
+                    self.msglbl.setText(new_trackInfo)
                     if self.notificationsEnabled == True:
-                        self.trayIcon.showMessage("Radio", trackinfo[:200], self.tIcon, 5000)
+                        self.trayIcon.showMessage("Radio", new_trackInfo, self.tIcon, 5000)
                     self.msglbl.adjustSize()
                     self.adjustSize()
             else:
