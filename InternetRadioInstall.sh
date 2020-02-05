@@ -32,7 +32,7 @@ then
     echo "restore myradio.txt"
     cp $rf $HOME/.local/share/InternetRadio
 else
-    echo "$filename not found"
+    echo "$rf not found"
 fi
 desktopfile=$HOME/.local/share/applications/InternetRadio.desktop
 if [ -e "$desktopfile" ]
