@@ -15,14 +15,6 @@ else
     echo "$sharedapps not found"
     mkdir $sharedapps
 fi
-desktopfile=$HOME/.local/share/applications/InternetRadio.desktop
-if [ -e "$desktopfile" ]
-then
-    echo "$desktopfile already exists"
-else
-    echo "$desktopfile not found"
-    cp $HOME/.local/share/InternetRadio/InternetRadio.desktop $HOME/.local/share/applications
-fi
 echo "removing InternetRadio"
 rm -rf ~/.local/share/InternetRadio
 cd ~/.local/share/
@@ -42,7 +34,14 @@ then
 else
     echo "$filename not found"
 fi
-#cp ~/.local/share/InternetRadio/InternetRadio.desktop ~/.local/share/applications
+desktopfile=$HOME/.local/share/applications/InternetRadio.desktop
+if [ -e "$desktopfile" ]
+then
+    echo "$desktopfile already exists"
+else
+    echo "$desktopfile not found"
+    cp $HOME/.local/share/InternetRadio/InternetRadio.desktop $HOME/.local/share/applications
+fi
 rm ~/Downloads/InternetRadioInstall.sh
 echo "starting InternetRadio ... please use tray icon context menu with right mouse button"
 python3 ~/.local/share/InternetRadio/myRadio.py
