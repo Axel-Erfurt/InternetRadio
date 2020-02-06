@@ -1,750 +1,577 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
-import os
-import sys
-import encodings
-import requests
-from subprocess import call
-from PyQt5.QtCore import (Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, 
-                            QStandardPaths, QFile, QDir, QSettings)
-from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, 
-                            QMainWindow, QFileDialog, QListView, QMenu, qApp, QAction, 
-                             QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, 
-                            QMessageBox, QPlainTextEdit, QSystemTrayIcon)
+##############
+"""
+made in October 2019 by Axel Schneider
+https://github.com/Axel-Erfurt/
+Credits: André P. Santos (andreztz) for pyradios
+https://github.com/andreztz/pyradios
+Copyright (c) 2018 André P. Santos
+radio-browser
+http://www.radio-browser.info/webservice
+"""
+##############
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QPlainTextEdit, QLineEdit, QComboBox, QInputDialog, 
+                             QPushButton, QFileDialog, QAction, QMenu, QMessageBox)
+from PyQt5.QtGui import QIcon, QTextCursor, QTextOption
+from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
-from PyQt5.QtGui import QIcon, QPixmap, QPalette, QCursor, QStandardItem
-from PyQt5.Qt import QDesktopServices
-import RadioFinder
+from urllib import request
+import os
+import requests
+import sys
+from xml.etree import ElementTree
+from urllib.parse import urljoin
 
-changed = pyqtSignal(QMimeData)
-btnwidth = 80
+
+BASE_URL = "http://www.radio-browser.info/webservice/"
+
+endpoints = {
+    "countries": {1: "{fmt}/countries", 2: "{fmt}/countries/{filter}"},
+    "codecs": {1: "{fmt}/codecs", 2: "{fmt}/codecs/{filter}"},
+    "states": {
+        1: "{fmt}/states",
+        2: "{fmt}/states/{filter}",
+        3: "{fmt}/states/{country}/{filter}",
+    },
+    "languages": {1: "{fmt}/languages", 2: "{fmt}/languages/{filter}"},
+    "tags": {1: "{fmt}/tags", 2: "{fmt}/tags/{filter}"},
+    "stations": {1: "{fmt}/stations", 3: "{fmt}/stations/{by}/{search_term}"},
+    "playable_station": {3: "{ver}/{fmt}/url/{station_id}"},
+    "station_search": {1: "{fmt}/stations/search"},
+}
+
+def request(endpoint, **kwargs):
+
+    fmt = kwargs.get("format", "json")
+
+    if fmt == "xml":
+        content_type = f"application/{fmt}"
+    else:
+        content_type = f"application/{fmt}"
+
+    headers = {"content-type": content_type, "User-Agent": "getRadiolist/1.0"}
+
+    params = kwargs.get("params", {})
+
+    url = BASE_URL + endpoint
+
+    resp = requests.get(url, headers=headers, params=params)
+
+    if resp.status_code == 200:
+        if fmt == "xml":
+            return resp.text
+        return resp.json()
+
+    return resp.raise_for_status()
+
+genres = """Classic Rock
+Acoustic
+Bluegrass 
+Country
+Folk
+Folk Rock
+Grunge
+Hard Rock
+Blues
+Oldies
+Pop
+Rock
+Classic
+Beat
+Metal
+Techno
+Schlager"""
+
+class EndPointBuilder:
+    def __init__(self, fmt="json"):
+        self.fmt = fmt
+        self._option = None
+        self._endpoint = None
+
+    @property
+    def endpoint(self):
+        return endpoints[self._endpoint][self._option]
+
+    def produce_endpoint(self, **parts):
+        self._option = len(parts)
+        self._endpoint = parts["endpoint"]
+        parts.update({"fmt": self.fmt})
+        return self.endpoint.format(**parts)
 
 
-class MainWin(QMainWindow):
+class RadioBrowser:
+    def __init__(self, fmt="json"):
+        self.fmt = fmt
+        self.builder = EndPointBuilder(fmt=self.fmt)
+
+    def countries(self, filter=""):
+        endpoint = self.builder.produce_endpoint(endpoint="countries")
+        return request(endpoint)
+
+    def codecs(self, filter=""):
+        endpoint = self.builder.produce_endpoint(endpoint="codecs")
+        return request(endpoint)
+
+    def states(self, country="", filter=""):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="states", country=country, filter=filter
+        )
+        return request(endpoint)
+
+    def languages(self, filter=""):
+        endpoint = self.builder.produce_endpoint(endpoint="languages", filter=filter)
+        return request(endpoint)
+
+    def tags(self, filter=""):
+        endpoint = self.builder.produce_endpoint(endpoint="tags", filter=filter)
+        return request(endpoint)
+
+    def stations(self, **params):
+        endpoint = self.builder.produce_endpoint(endpoint="stations")
+        kwargs = {}
+        if params:
+            kwargs.update({"params": params})
+        return request(endpoint, **kwargs)
+
+    def stations_byid(self, id):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="byid", search_term=id
+        )
+        return request(endpoint)
+
+    def stations_byuuid(self, uuid):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="byuuid", search_term=uuid
+        )
+        return request(endpoint)
+
+    def stations_byname(self, name):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="byname", search_term=name
+        )
+        return request(endpoint)
+
+    def stations_bynameexact(self, nameexact):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bynameexact", search_term=nameexact
+        )
+        return request(endpoint)
+
+    def stations_bycodec(self, codec):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bycodec", search_term=codec
+        )
+        return request(endpoint)
+
+    def stations_bycodecexact(self, codecexact):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bycodecexact", search_term=codecexact
+        )
+        return request(endpoint)
+
+    def stations_bycountry(self, country):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bycountry", search_term=country
+        )
+        return request(endpoint)
+
+    def stations_bycountryexact(self, countryexact):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bycountryexact", search_term=countryexact
+        )
+        return request(endpoint)
+
+    def stations_bystate(self, state):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bystate", search_term=state
+        )
+        return request(endpoint)
+
+    def stations_bystateexact(self, stateexact):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bystateexact", search_term=stateexact
+        )
+        return request(endpoint)
+
+    #
+    def stations_bylanguage(self, language):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bylanguage", search_term=language
+        )
+        return request(endpoint)
+
+    def stations_bylanguageexact(self, languageexact):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bylanguageexact", search_term=languageexact
+        )
+        return request(endpoint)
+
+    def stations_bytag(self, tag):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bytag", search_term=tag
+        )
+        return request(endpoint)
+
+    def stations_bytagexact(self, tagexact):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="stations", by="bytagexact", search_term=tagexact
+        )
+        return request(endpoint)
+
+    def playable_station(self, station_id):
+        endpoint = self.builder.produce_endpoint(
+            endpoint="playable_station", station_id=station_id, ver="v2"
+        )
+
+        return request(endpoint)
+
+    def station_search(self, params, **kwargs):
+        # http://www.radio-browser.info/webservice#Advanced_station_search
+        assert isinstance(params, dict), "params must be a dictionary."
+        kwargs["params"] = params
+        endpoint = self.builder.produce_endpoint(endpoint="station_search")
+        return request(endpoint, **kwargs)
+    
+
+class MainWindow(QMainWindow):
     def __init__(self):
-        super(MainWin, self).__init__()
-        self.settings = QSettings("myRadio", "settings")
-        self.setStyleSheet(mystylesheet(self))
-        self.radioNames = []
-        self.radiolist = []
-        self.channels = []
-        self.radiofile = ""
-        self.radioStations = ""
-        self.rec_name = ""
-        self.rec_url = ""
-        self.notificationsEnabled = True
-        self.wg = QWidget()
-        self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(10 ,2, 10, 2)
-        self.layout1 = QHBoxLayout()
-
-        self.outfile = QStandardPaths.standardLocations(QStandardPaths.TempLocation)[0] + "/radio.mp3"
-        self.recording_enabled = False
-        self.is_recording = False
-        ### combo box
-        self.urlCombo = QComboBox(self)
-
-        self.play_btn = QPushButton("Play", self)
-        self.play_btn.setFixedWidth(btnwidth)
-        self.play_btn.setFlat(True)
-        self.play_btn.setIcon(QIcon.fromTheme("media-playback-start"))
-        self.layout1.addWidget(self.play_btn)
-
-        self.pause_btn = QPushButton("Pause", self)
-        self.pause_btn.setFixedWidth(btnwidth)
-        self.pause_btn.setFlat(True)
-        self.pause_btn.setIcon(QIcon.fromTheme("media-playback-pause"))
-        self.layout1.addWidget(self.pause_btn)
-
-        self.stop_btn = QPushButton("Stop", self)
-        self.stop_btn.setFixedWidth(btnwidth)
-        self.stop_btn.setFlat(True)
-        self.stop_btn.setIcon(QIcon.fromTheme("media-playback-stop"))
-        self.layout1.addWidget(self.stop_btn)
-        ### record
-        self.rec_btn = QPushButton("Record", self)
-        self.rec_btn.setFixedWidth(btnwidth)
-        self.rec_btn.setFlat(True)
-        self.rec_btn.setIcon(QIcon.fromTheme("media-record"))
-        self.rec_btn.clicked.connect(self.recordRadio1)
-        self.rec_btn.setToolTip("Record Station")
-        self.layout1.addWidget(self.rec_btn)
-        ### stop record
-        self.stoprec_btn = QPushButton("Stop Rec", self)
-        self.stoprec_btn.setFixedWidth(btnwidth)
-        self.stoprec_btn.setFlat(True)
-        self.stoprec_btn.setIcon(QIcon.fromTheme("media-playback-stop"))
-        self.stoprec_btn.clicked.connect(self.stop_recording)
-        self.stoprec_btn.setToolTip("Stop Recording")
-        self.layout1.addWidget(self.stoprec_btn)
-        ### edit Radiio List
-        self.edit_btn = QPushButton("", self)
-        self.edit_btn.setFixedWidth(26)
-        self.edit_btn.setFlat(True)
-        self.edit_btn.setToolTip("Channel Editor")
-        self.edit_btn.setIcon(QIcon.fromTheme("preferences-system"))
-        self.edit_btn.clicked.connect(self.edit_Channels)
-        self.layout1.addWidget(self.edit_btn)
-
-
-        spc1 = QSpacerItem(6, 10, QSizePolicy.Expanding, QSizePolicy.Maximum)
-        self.level_sld = QSlider(self)
-        self.level_sld.setTickPosition(1)
-        self.level_sld.setOrientation(Qt.Horizontal)
-        self.level_sld.setValue(65)
-        self.level_lbl = QLabel(self)
-        self.level_lbl.setAlignment(Qt.AlignHCenter)
-        self.level_lbl.setText("Volume 65")
-        self.layout.addWidget(self.urlCombo)
-        self.layout.addLayout(self.layout1)
-        self.layout.addItem(spc1)
-        self.layout.addWidget(self.level_sld)
-        self.layout.addWidget(self.level_lbl)
-        self.player = RadioPlayer(self)
-        self.player.metaDataChanged.connect(self.metaDataChanged)
-        self.player.error.connect(self.handleError)
-        self.play_btn.clicked.connect(self.playRadioStation)
-        self.pause_btn.clicked.connect(self.pause_preview)
-        self.stop_btn.clicked.connect(self.stop_preview)
-        self.level_sld.valueChanged.connect(self.set_sound_level)
-        self.urlCombo.currentIndexChanged.connect(self.url_changed)
-        self.current_station = ""
-
-        self.process = QProcess()
-        self.process.started.connect(self.getPID)
-
-        self.wg.setLayout(self.layout)
-        self.setCentralWidget(self.wg)
-
-        self.stoprec_btn.setVisible(False)
-        self.readStations()
-
-        self.createStatusBar()
-        self.setAcceptDrops(True)
-        self.setWindowTitle("Radio")
+        super(MainWindow, self).__init__()
         self.tIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
         self.setWindowIcon(self.tIcon)
-        self.stationActs = []
-
-
-        self.setMinimumHeight(180)
-        self.setFixedWidth(460)
-        self.move(0, 30)
-
-        # Init tray icon
-        trayIcon = QIcon(self.tIcon)
-
-        self.trayIcon = QSystemTrayIcon()
-        self.trayIcon.setIcon(trayIcon)
-        self.trayIcon.show()
-                
-        self.metaLabel = QLabel()
-
-        self.geo = self.geometry()
-        self.findRadioAction = QAction(QIcon.fromTheme("edit-find"), "find Radio Channels", 
-                                    triggered = self.findRadio)
-        self.editAction = QAction(QIcon.fromTheme("preferences-system"), "edit Channels", 
-                                    triggered = self.edit_Channels)
-        self.showWinAction = QAction(QIcon.fromTheme("view-restore"), "show Main Window", triggered = self.showMain)
-        self.notifAction = QAction(QIcon.fromTheme("dialog-information"), "disable Notifications", triggered = self.toggleNotif)
-        self.togglePlayerAction = QAction("stop playing", triggered = self.togglePlay)
-        self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
-        self.recordAction = QAction(QIcon.fromTheme("media-record"), "record channel", triggered = self.recordRadio1)
-        self.stopRecordAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop recording", 
-                                triggered = self.stop_recording)
-        self.findExecutable()
-        self.readSettings()
-        self.makeTrayMenu()
-        if QSystemTrayIcon.isSystemTrayAvailable():
-            print("QSystemTrayIcon is available")
-        else:
-            print("QSystemTrayIcon is not available")
-        if self.player.state() == QMediaPlayer.StoppedState:
-            self.togglePlayerAction.setText("start playing")
-            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-start"))            
-        elif self.player.state() == QMediaPlayer.PlayingState:
-            self.togglePlayerAction.setText("stop playing")
-            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
-            
-            
-    def findRadio(self):
-        fr = os.path.join(os.path.dirname(sys.argv[0]), "RadioFinder.py")
-        call(["python3", fr])
+        self.setGeometry(0, 0, 700, 400)
+        self.setContentsMargins(6, 6, 6, 6)
+        self.setStyleSheet(myStyleSheet(self))
+        self.setWindowTitle("Radio Suche")
+        self.genreList = genres.splitlines()
+        self.findfield = QLineEdit()
+        self.findfield.setFixedWidth(250)
+        self.findfield.addAction(QIcon.fromTheme("edit-find"), 0)
+        self.findfield.setPlaceholderText("type search term and press RETURN ")
+        self.findfield.returnPressed.connect(self.findStations)
+        self.findfield.setClearButtonEnabled(True)
+        self.field = QPlainTextEdit()
+        self.field.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.field.customContextMenuRequested.connect(self.contextMenuRequested)
+        self.field.cursorPositionChanged.connect(self.selectLine)
+        self.field.setWordWrapMode(QTextOption.NoWrap)
+        ### genre box
+        self.combo = QComboBox()
+        self.combo.currentIndexChanged.connect(self.comboSearch)
+        self.combo.addItem("choose Genre")
+        for m in self.genreList:
+            self.combo.addItem(m)
+        self.combo.setFixedWidth(150)
+        ### toolbar ###
+        self.tb = self.addToolBar("tools")
+        self.tb.setContextMenuPolicy(Qt.PreventContextMenu)
+        self.tb.setMovable(False)
+        self.saveButton = QPushButton("Save as txt")
+        self.saveButton.setIcon(QIcon.fromTheme("document-save"))
+        self.saveButton.clicked.connect(self.saveStations)
+        self.savePlaylistButton = QPushButton("Save as m3u")
+        self.savePlaylistButton.setIcon(QIcon.fromTheme("document-save"))
+        self.savePlaylistButton.clicked.connect(self.savePlaylist)
+        self.setCentralWidget(self.field)
+        self.tb.addWidget(self.findfield)
+        self.tb.addWidget(self.saveButton)
+        self.tb.addWidget(self.savePlaylistButton)
+        self.tb.addSeparator()
+        self.tb.addWidget(self.combo)
+        ### player ###
+        self.player = QMediaPlayer()
+        self.player.metaDataChanged.connect(self.metaDataChanged)
+        self.startButton = QPushButton("Play")
+        self.startButton.setIcon(QIcon.fromTheme("media-playback-start"))
+        self.startButton.clicked.connect(self.getURLtoPlay)
+        self.stopButton = QPushButton("Stop")
+        self.stopButton.setIcon(QIcon.fromTheme("media-playback-stop"))
+        self.stopButton.clicked.connect(self.stopPlayer)
+        self.statusBar().addPermanentWidget(self.startButton)
+        self.statusBar().addPermanentWidget(self.stopButton)
+        ## actions
+        self.addToRadiolistAction = QAction(QIcon.fromTheme("add"), "add to myRadio List", self, triggered=self.addToRadiolist)
+        self.getNameAction = QAction(QIcon.fromTheme("edit-copy"), "copy Station Name", self, triggered=self.getName)
+        self.getUrlAction = QAction(QIcon.fromTheme("edit-copy"), "copy Station URL", self, triggered=self.getURL)
+        self.getNameAndUrlAction = QAction(QIcon.fromTheme("edit-copy"), "copy Station Name,URL", self, triggered=self.getNameAndUrl)
+        self.getURLtoPlayAction = QAction(QIcon.fromTheme("media-playback-start"), "play Station", self, shortcut="F6", triggered=self.getURLtoPlay)
+        self.addAction(self.getURLtoPlayAction)
+        self.stopPlayerAction = QAction(QIcon.fromTheme("media-playback-stop"), "stop playing", self, shortcut="F7", triggered=self.stopPlayer)
+        self.addAction(self.stopPlayerAction)
+        self.helpAction = QAction(QIcon.fromTheme("help-info"), "Help", self, shortcut="F1", triggered=self.showHelp)
+        self.addAction(self.helpAction)
+        self.statusBar().showMessage("Welcome", 0)
+        self.modified = False
         
+    def closeEvent(self, event):
+        if self.modified == True:
+            self.statusBar().showMessage("saved!", 0)
+            self.msgbox("new channels available after restarting myRadio")
         
-    def handleError(self):
-        print("Error Player: " + self.player.errorString())
-        self.trayIcon.showMessage("Error", self.player.errorString(), 2000)
-        self.msglbl.setText(f"Error:\n{self.player.errorString()}")
-           
-    def togglePlay(self):          
-        if self.togglePlayerAction.text() == "stop playing":
-            self.stop_preview()
-            self.togglePlayerAction.setText("start playing")
-            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-start"))
-        else:
-            self.playRadioStation()
-            self.togglePlayerAction.setText("stop playing")
-            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
-
-    def getURLfromPLS(self, inURL):
-        print("detecting", inURL)
-        response = requests.get(inURL)
-        html = response.text.splitlines()
-        for x in html:
-            if "File" in x:
-                url = x.partition("=")[2]
-        print(url)
-        return (url)
-
-    def getURLfromM3U(self, inURL):
-        print("detecting", inURL)
-        response = requests.get(inURL)
-        html = response.text.splitlines()
-        print(html)
-        if len(html) > 1:
-            url = str(html[1])
-        else:
-            url = str(html[0])
-        print(url)
-        return(url)
-        
-    def makeTrayMenu(self):
-        menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
-        self.tray_menu = QMenu()
-        self.tray_menu.addAction(self.togglePlayerAction)
-        self.tray_menu.setStyleSheet("font-size: 7pt;")
-        ##### submenus from categories ##########
-        b = self.radioStations.splitlines()
-        i = 0
-        for x in range(len(b)):
-            line = b[x]
-            while True:
-                if line.startswith("--"):
-                    chm = self.tray_menu.addMenu(line.replace("-- ", "").replace(" --", ""))
-                    chm.setIcon(self.tIcon)
-                    break
-                    continue
-
-                if  not line.startswith("--"):
-                    ch = line.partition(",")[0]
-                    data = line.partition(",")[2]
-                    
-                    self.stationActs.append(QAction(QIcon.fromTheme("browser"), ch, triggered = self.openTrayStation))
-                    self.stationActs[i].setData(str(i))
-                    chm.addAction(self.stationActs[i])
-                    i += 1
-                    break
-        ####################################
-        self.tray_menu.addSeparator()
-        if self.is_recording == False:
-            if not self.urlCombo.currentText().startswith("--"):
-                self.tray_menu.addAction(self.recordAction)
-                self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
-        if self.is_recording == True:
-            self.tray_menu.addAction(self.stopRecordAction)
-        self.tray_menu.addSeparator()
-        self.tray_menu.addAction(self.editAction)
-        self.tray_menu.addAction(self.showWinAction)
-        self.tray_menu.addSeparator()
-        self.tray_menu.addAction(self.notifAction)
-        self.tray_menu.addAction(self.findRadioAction)
-        self.tray_menu.addSeparator()
-        exitAction = self.tray_menu.addAction(QIcon.fromTheme("application-exit"), "exit")
-        exitAction.triggered.connect(self.exitApp)
-        self.trayIcon.setContextMenu(self.tray_menu)
-
-    def showMain(self):
-        if self.isVisible() ==False:
-            self.showWinAction.setText("hide Main Window")
-            self.setVisible(True)
-        elif self.isVisible() ==True:
-            self.showWinAction.setText("show Main Window")
-            self.setVisible(False)
-            
-    def toggleNotif(self):
-        if self.notifAction.text() == "disable Notifications":
-            self.notifAction.setText("enable Notifications")
-            self.notificationsEnabled = False
-        else:
-            self.notifAction.setText("enable Notifications")
-            self.notifAction.setText("disable Notifications")
-            self.notificationsEnabled = True
-        print("Notifications", self.notificationsEnabled )
-
-    def openTrayStation(self):
-        action = self.sender()
-        if action:
-            ind = action.data()
-            name = action.text()     
-            self.urlCombo.setCurrentIndex(self.urlCombo.findText(name))
-            print("%s %s %s" % ("switch to station:", ind, self.urlCombo.currentText()))
-
-    def exitApp(self):
-        self.close()
-        QApplication.quit()
-
-    def message(self):
-        QMessageBox.information(
-                None, 'Systray Message', 'Click Message')
-
-    def closeEvent(self, e):
-        self.writeSettings()
-        print("writing settings ...\nGoodbye ...")
-        QApplication.quit()
-        
-
-    def readSettings(self):
-        print("reading settings ...")
-        if self.settings.contains("pos"):
-            pos = self.settings.value("pos", QPoint(200, 200))
-            self.move(pos)
-        else:
-            self.move(0, 26)
-        if self.settings.contains("lastChannel"):
-            lch = self.settings.value("lastChannel")
-            self.urlCombo.setCurrentIndex(self.urlCombo.findText(lch))
-            self.url_changed()
-        if self.settings.contains("notifications"):
-            self.notificationsEnabled = self.settings.value("notifications")
-            if self.settings.value("notifications") == 'false':
-                self.notifAction.setText("enable Notifications")
-            else:
-                self.notifAction.setText("disable Notifications")
-        print("Notifications", self.notificationsEnabled)
-
-    def writeSettings(self):
-        self.settings.setValue("pos", self.pos())
-        self.settings.setValue("index", self.urlCombo.currentIndex())
-        self.settings.setValue("lastChannel", self.urlCombo.currentText())
-        self.settings.setValue("notifications", self.notificationsEnabled)
-        self.settings.sync()
-
-    def readStations(self):
-        menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
-        self.urlCombo.clear()
-        self.radiolist = []
-        self.channels = []
-        dir = os.path.dirname(sys.argv[0])
-        self.radiofile = os.path.join(dir, "myradio.txt")
-        import codecs
-        with open(self.radiofile, 'r') as f:
-            self.radioStations = f.read()
+    def addToRadiolist(self):
+        text = ""
+        filename = os.path.join(os.path.dirname(sys.argv[0]), "myradio.txt")
+        print(filename)
+        with open(filename, 'r') as f:
+            text = f.read()
+            text = text[:text.rfind('\n')]
             f.close()
-            self.radioStations = self.remove_last_line_from_string(self.radioStations)
-            for t in self.radioStations:
-                self.channels.append(t)
-            for lines in self.radioStations.split("\n"):
-                if not lines.startswith("--"):
-                    self.urlCombo.addItem(QIcon.fromTheme("browser"), lines.partition(",")[0],Qt.UserRole - 1)
-                else:
-                    m = QStandardItem(menuSectionIcon,lines.partition(",")[0])
-                    m.setEnabled(False)
-                    self.urlCombo.model().appendRow(m)            
-                self.radiolist.append(lines.partition(",")[2])
-        self.urlCombo.setCurrentIndex(0)
+            textlist = text.splitlines()
+        mycat = []
+        for line in textlist:
+            if line.startswith("--"):
+                mycat.append(line.replace("-- ", "").replace(" --", ""))
+        
+        dlg = QInputDialog()
+        mc,_ = dlg.getItem(self, "", "select Genre for the station", mycat)
+        entry = self.getNameAndUrl()
+        print(mc, entry)
+        filename = os.path.dirname(sys.argv[0]) + os.sep + "myradio.txt"
+        print(filename)
+        with open(filename, 'r') as f:
+            text = f.read()
+            text = text[:text.rfind('\n')]
+            f.close()
+            textlist = text.splitlines()
+            if mc in mycat:
+                for x in range(len(textlist)):
+                    if textlist[x] == f"-- {mc} --":
+                        textlist.insert(x + 1, entry)
+            else:
+                textlist.append(f"-- {mc} --")
+                textlist.append(entry)
+        with open(filename, 'w') as f:
+            for x in reversed(range(len(textlist))):
+                if textlist[x] == "\n":
+                    print(x)
+                    del textlist[x]
+            text = '\n'.join(textlist)
+            f.write(text)
+            f.write('\n\n')
+            f.close()
+            self.modified = True
+            
+            
+    def msgbox(self, message):
+        msg = QMessageBox(1, "Information", message, QMessageBox.Ok)
+        msg.exec()
 
-    def edit_Channels(self):
-        self.trayIcon.showMessage("Note", "changes are available after restarting myRadio", 2000)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(self.radiofile))
+    def comboSearch(self):
+        if self.combo.currentIndex() > 0:
+            self.findfield.setText(self.combo.currentText())
+            self.findStations()
 
-    def keyPressEvent(self, e):
-        if e.key() == Qt.Key_F5:
-            self.playURL()
-        elif e.key() == Qt.Key_F1:
-            QMessageBox.information(self, "Information", "F5 -> play URL from Clipboard").exec_()
+    def getName(self):
+        t = self.field.textCursor().selectedText().partition(",")[0]
+        clip = QApplication.clipboard()
+        clip.setText(t)
+
+    def getURL(self):
+        t = self.field.textCursor().selectedText().partition(",")[2]
+        clip = QApplication.clipboard()
+        clip.setText(t)
+
+    def getNameAndUrl(self):
+        t = self.field.textCursor().selectedText()
+        clip = QApplication.clipboard()
+        clip.setText(t)
+        return(t)
+        
+    def selectLine(self):
+        tc = self.field.textCursor()
+        tc.select(QTextCursor.LineUnderCursor)
+        tc.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor) ##, 
+        tc.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+        self.field.setTextCursor(tc)
+
+    def showHelp(self):
+        QMessageBox.information(self, "Information", "F6 -> play Station (from line where cursor is)\nF7 -> stop playing")
+
+    def stopPlayer(self):
+        self.player.stop()
+        self.statusBar().showMessage("Player stopped", 0)
+
+    ### QPlainTextEdit contextMenu
+    def contextMenuRequested(self, point):
+        cmenu = QMenu()
+        if not self.field.toPlainText() == "":
+            cmenu.addAction(self.getNameAction)
+            cmenu.addAction(self.getUrlAction)
+            cmenu.addAction(self.getNameAndUrlAction)
+            cmenu.addSeparator()
+            cmenu.addAction(self.addToRadiolistAction)
+            cmenu.addSeparator()
+            cmenu.addAction(self.getURLtoPlayAction)
+            cmenu.addAction(self.stopPlayerAction)
+            cmenu.addSeparator()
+            cmenu.addAction(self.helpAction)
+        cmenu.exec_(self.field.mapToGlobal(point))  
+
+    def getURLtoPlay(self):
+        url = ""
+        tc = self.field.textCursor()
+        rtext = tc.selectedText().partition(",")[2]
+        stext = tc.selectedText().partition(",")[0]
+        if rtext.endswith(".pls") :
+            url = self.getURLfromPLS(rtext)
+        elif rtext.endswith(".m3u") :
+            url = self.getURLfromM3U(rtext)
         else:
-            e.accept()
-
-    def findExecutable(self):
-        wget = QStandardPaths.findExecutable("wget")
-        print("wget:", wget)
-        if wget != "":
-            print("%s %s %s" % ("wget found at ", wget, " *** recording enabled"))
-            self.msglbl.setText("recording enabled")
-            self.trayIcon.showMessage("Note", "wget found\nrecording enabled", 1000)
-            self.recording_enabled = True
-        else:
-            self.trayIcon.showMessage("Note", "wget not found\nrecording disabled", 1000)
-            print("wget not found\nrecording disabled")
-            self.recording_enabled = False
-
-    def remove_last_line_from_string(self, s):
-        return s[:s.rfind('\n')]
-
-    def createStatusBar(self):
-        self.msglbl = QLabel()
-        self.msglbl.setWordWrap(True)
-        self.msglbl.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(self.msglbl)
-        self.msglbl.setText("Ready")
+            url = rtext
+        print("stream url=", url)
+        self.player.setMedia(QMediaContent(QUrl(url)))
+        self.player.play()
+        self.statusBar().showMessage("%s %s" % ("playing", stext), 0)
 
     def metaDataChanged(self):
         if self.player.isMetaDataAvailable():
             trackInfo = (self.player.metaData("Title"))
             trackInfo2 = (self.player.metaData("Comment"))
-            new_trackInfo = ""
-            if not trackInfo == None and len(trackInfo) > 100:
-                new_trackInfo = str(trackInfo).partition('{"title":"')[2].partition('","')[0].replace('\n', " ")[:200]
-            else:
-                new_trackInfo = str(trackInfo)
             if not trackInfo == None:
+                self.statusBar().showMessage(trackInfo, 0)
                 if not trackInfo2 == None:
-                    self.metaLabel.setText("%s %s" % (new_trackInfo, trackInfo2))
-                    if self.notificationsEnabled == True:
-                        self.trayIcon.showMessage("Radio", "%s %s" % (new_trackInfo, trackInfo2), self.tIcon, 5000)
-                    else:
-                        self.trayIcon.setToolTip("%s %s" % (new_trackInfo, trackInfo2))
-                else:
-                    self.msglbl.setText(new_trackInfo)
-                    if self.notificationsEnabled == True:
-                        self.trayIcon.showMessage("Radio", new_trackInfo, self.tIcon, 5000)
-                    else:
-                        self.trayIcon.setToolTip(new_trackInfo)
-                    self.msglbl.adjustSize()
-                    self.adjustSize()
-            else:
-                self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
+                   self.statusBar().showMessage("%s %s" % (trackInfo, trackInfo2))
+
+    def getURLfromPLS(self, inURL):
+        if "&" in inURL:
+            inURL = inURL.partition("&")[0]
+        response = request.urlopen(inURL)
+        html = response.read().decode("utf-8").splitlines()
+        if len(html) > 3:
+            if "http" in str(html[1]):
+                t = str(html[1])
+            elif "http" in str(html[2]):
+                t = str(html[2])
+            elif "http" in str(html[3]):
+                t = str(html[3])
+        elif len(html) > 2:
+            if "http" in str(html[1]):
+                t = str(html[1])
+            elif "http" in str(html[2]):
+                t = str(html[2])
         else:
-            self.msglbl.setText("%s %s" % ("playing", self.urlCombo))
+            t = str(html[0])
+        url = t.partition("=")[2].partition("'")[0]
+        return (url)
 
-    def url_changed(self):
-        if self.urlCombo.currentIndex() < self.urlCombo.count() - 1:
-            if not self.urlCombo.currentText().startswith("--"):
-                ind = self.urlCombo.currentIndex()
-                url = self.radiolist[ind]
-                
-                if url.endswith(".m3u"):
-                    url = self.getURLfromM3U(url)
-                if url.endswith(".pls"):
-                    url = self.getURLfromPLS(url)
-                
-                self.current_station = url
-                self.player.stop()
-                self.rec_btn.setVisible(True)
-                self.stop_btn.setVisible(True)
-                self.play_btn.setVisible(True)
-                self.pause_btn.setVisible(True)
-                print("%s %s" %("playing", url))
-                self.playRadioStation()
-                if self.togglePlayerAction.text() == "stop playing":
-                    self.togglePlayerAction.setText("start playing")
-                    self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-start"))
-                else:
-                    self.togglePlayerAction.setText("stop playing")
-                    self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
+    def getURLfromM3U(self, inURL):
+        if "?u=" in inURL:
+            inURL = inURL.partition("?u=")[2]
+        if "&" in inURL:
+            inURL = inURL.partition("&")[0]
+        response = request.urlopen(inURL)
+        html = response.read().splitlines()
+        if len(html) > 1:
+            if "http" in str(html[1]):
+                t = str(html[1])
             else:
-                self.rec_btn.setVisible(False)
-                self.stop_btn.setVisible(False)
-                self.play_btn.setVisible(False)
-                self.pause_btn.setVisible(False)
- 
-    def playRadioStation(self):
-        if self.player.is_on_pause:
-            self.set_running_player()
-            self.player.start()
-            self.pause_btn.setFocus()
-            self.togglePlayerAction.setText("stop playing")
-            self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
-            return
- 
-        if not self.current_station:
-            return
- 
-        self.player.set_media(self.current_station)
-        self.set_running_player()
-        self.player.start()
-        if self.is_recording == True:
-            self.recordAction.setText(f"stop recording {self.rec_name}")
-            self.recordAction.setIcon(QIcon.fromTheme("media-playback-stop"))
+                t = str(html[0])
         else:
-            self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
-            self.recordAction.setIcon(QIcon.fromTheme("media-record"))
-        self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
-        self.setWindowTitle(self.urlCombo.currentText())
+            t = str(html[0])
+        url = t.partition("'")[2].partition("'")[0]
+        return (url)
 
-
-    def playURL(self):
-        clip = QApplication.clipboard()
-        if not clip.text().endswith(".pls") and not clip.text().endswith(".m3u"):
-            self.current_station = clip.text()
-        elif clip.text().endswith(".pls") :
-            print("is a pls")
-            url = self.getURLfromPLS(clip.text())
-            self.current_station = url
-        elif clip.text().endswith(".m3u") :
-            print("is a m3u")
-            url = self.getURLfromM3U(clip.text())
-            self.current_station = url
-        print(self.current_station)
-
-        if self.player.is_on_pause:
-            self.set_running_player()
-            self.player.start()
-            self.pause_btn.setFocus()
-            return
- 
-        if not self.current_station:
-            return
- 
-        self.player.set_media(self.current_station)
-        self.set_running_player()
-        self.player.start()
-        self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
+    def findStations(self):
+        self.field.setPlainText("")
+        mysearch = self.findfield.text()
+        self.statusBar().showMessage("searching ...")
+        rb = RadioBrowser()
+        myparams = {'name': 'search', 'nameExact': 'false'}
         
-    def setVolumeWheel(self):
-        print("wheel")
-        self.level_sld.setValue(self.level_sld.value() + 5)
-
- 
-    def set_running_player(self):
-        self.play_btn.setEnabled(False)
-        self.pause_btn.setEnabled(True)
-        self.stop_btn.setEnabled(True)
-        self.rec_btn.setEnabled(True)
- 
-    def pause_preview(self):
-        self.player.set_on_pause()
-        self.play_btn.setEnabled(True)
-        self.pause_btn.setEnabled(False)
-        self.rec_btn.setEnabled(False)
-        self.play_btn.setFocus(True)
-        self.msglbl.setText("Pause")
- 
-    def stop_preview(self):
-        self.player.finish()
-        self.play_btn.setEnabled(True)
-        self.pause_btn.setEnabled(False)
-        self.stop_btn.setEnabled(False)
-        self.rec_btn.setEnabled(False)
-        self.msglbl.setText("Stopped")
-        self.togglePlayerAction.setText("start playing")
-        self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-start"))
-
- 
-    def set_sound_level(self, level):
-        self.player.set_sound_level(level)
-        self.level_lbl.setText("Volume " + str(level))
- 
-    def update_volume_slider(self, level):
-        self.level_lbl.setText("Volume " + str(level))
-        self.level_sld.blockSignals(True)
-        self.level_sld.setValue(value)
-        self.level_lbl.setText("Volume " + str(level))
-        self.level_sld.blockSignals(False)
-
-    def recordRadio1(self):
-        if self.is_recording == False:
-            self.deleteOutFile()
-            self.rec_url = self.current_station
-            self.rec_name = self.urlCombo.currentText()
-            cmd = ("wget -q "  + self.rec_url + " -O " + self.outfile)
-            print(cmd)         
-            self.is_recording = True   
-            self.process.startDetached(cmd)
-            self.recordAction.setText(f"stop recording {self.rec_name}")
-            self.recordAction.setIcon(QIcon.fromTheme("media-playback-stop"))
-            self.rec_btn.setVisible(False)
-            self.stoprec_btn.setVisible(True)
+        for key in myparams.keys():
+                if key == "name":
+                    myparams[key] = mysearch
+        
+        r = rb.station_search(params=myparams)
+        
+        n = ""
+        m = ""
+        for i in range(len(r)):
+            for key,value in r[i].items():
+                if str(key) == "name":
+                    n = value.replace(",", " ")
+                if str(key) == "url":
+                    m = value
+                    self.field.appendPlainText("%s,%s" % (n, m))
+        if not self.field.toPlainText() == "":
+            self.statusBar().showMessage("found "+ str(self.field.toPlainText().count('\n')+1) + " '" + self.findfield.text() + "' Stations")
         else:
-            self.stop_recording()
+            self.statusBar().showMessage("nothing found", 0)
 
-    def stop_recording(self):
-        if self.is_recording == True:
-            self.process.close()
-            print("stopping recording")
-            self.is_recording = False
-            QProcess.execute("killall wget")
-            if self.isVisible() ==False:
-                self.showWinAction.setText("hide Main Window")
-                self.setVisible(True)
-            self.saveMovie()
-            self.stoprec_btn.setVisible(False)
-            self.rec_btn.setVisible(True)
-            self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
-            self.recordAction.setIcon(QIcon.fromTheme("media-record"))
-            self.showMain()
-        else:
-            self.trayIcon.showMessage("Note", "Recording is not in progress", 2000)
+    def saveStations(self):
+        if not self.field.toPlainText() == "":
+            path, _ = QFileDialog.getSaveFileName(None, "RadioStations", self.findfield.text() + ".txt", "Text Files (*.txt)")
+            if path:
+                s = self.field.toPlainText()
+                with open(path, 'w') as f:
+                    f.write(s)
+                    f.close()
+                    
 
-    def saveMovie(self):
-        if self.is_recording == False:
-            print("saving audio")
-            infile = QFile(self.outfile)
-            path, _ = QFileDialog.getSaveFileName(None, "Save as...", 
-                            QDir.homePath() + "/Musik/" + self.rec_name
-                            .replace("-", " ").replace(" - ", " ") + ".mp3", "Audio (*.mp3)")
-            if (path != ""):
-                savefile = path
-                if QFile(savefile).exists:
-                    QFile(savefile).remove()
-                print("%s %s" % ("saving", savefile))
-                if not infile.copy(savefile):
-                    QMessageBox.warning(self, "Error",
-                        "Cannot write file %s:\n%s." % (path, infile.errorString())) 
-                print("%s %s" % ("process state: ", str(self.process.state())))
-                if QFile(self.outfile).exists:
-                    print("exists")
-                    QFile(self.outfile).remove()
+    def savePlaylist(self):
+        if not self.field.toPlainText() == "":
+            path, _ = QFileDialog.getSaveFileName(None, "RadioStations", self.findfield.text() + ".m3u", "Playlist Files (*.m3u)")
+            if path:
+                result = ""
+                s = self.field.toPlainText()
+                st = []
+                for line in s.splitlines():
+                    st.append(line)
+                result += "#EXTM3U"
+                result += '\n'
+                for x in range(len(st)):
+                    result += "#EXTINF:" + str(x) + "," +  st[x].partition(",")[0]
+                    result += '\n'
+                    result += st[x].partition(",")[2]
+                    result += '\n'
+                with open(path, 'w') as f:
+                    f.write(result)
+                    f.close()
+                    self.statusBar().showMessage("saved!", 0)
 
-
-    def deleteOutFile(self):
-        if QFile(self.outfile).exists:
-            print("%s %s" % ("deleting file", self.outfile)) 
-            if QFile(self.outfile).remove:
-                print("%s %s" % (self.outfile, "deleted"))  
-            else:  
-                print("%s %s" % (self.outfile, "not deleted"))
-
-    def getPID(self):
-        print("%s %s" % (self.process.pid(), self.process.processId()))
-
- 
-class RadioPlayer(QMediaPlayer):
-    def __init__(self, driver):
-        super(RadioPlayer, self).__init__()
-        self.driver = driver
-        self.url = None
-        self.auto_sound_level = True
-        self.is_running = False
-        self.is_on_pause = False
-        self.volumeChanged.connect(self.on_volume_changed)
-        self.stateChanged.connect(self.on_state_changed)
- 
-    def set_media(self, media):
-        if isinstance(media, QUrl):
-            self.url = media
- 
-        elif isinstance(media, str):
-            self.url = QUrl(media)
- 
-        self.setMedia(QMediaContent(self.url))
- 
-    def start(self):
-        self.is_running = True
-        self.is_on_pause = False
-        self.play()
- 
-    def set_on_pause(self):
-        self.is_running = False
-        self.is_on_pause = True
-        self.pause()
-
- 
-    def finish(self):
-        self.is_running = False
-        self.is_on_pause = False
-        self.stop()
-            
-    def set_sound_level(self, level):
-        self.auto_sound_level = False
-        self.setVolume(level)
- 
-    def on_volume_changed(self, value):
-        if self.auto_sound_level:
-            self.update_volume_slider(value)
-        self.auto_sound_level = True
- 
-    def on_state_changed(self, state):
-        if not state:
-            self.driver.stop_preview()
-
-def mystylesheet(self):
+def myStyleSheet(self):
     return """
-QPushButton
+QPlainTextEdit
 {
-color: #1f3c5d;
-}
-QComboBox
-{
-height: 18px;
-background: #d3d7cf;
-color: #2e3436;
-font-size: 8pt;
-}
-QComboBox::item
-{
-     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
-                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
-selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #729fcf, stop: 1.0 #204a87);
-selection-color: #eeeeec;
+background: #eeeeec;
+color: #202020;
 }
 QStatusBar
 {
-height: 32px;
-color: #888a85;
 font-size: 8pt;
-background: transparent;
+color: #555753;
 }
-QLabel
+QMenuBar
 {
+background: transparent;
 border: 0px;
-color: #1f3c5d;
-font-size: 9pt;
+}
+QToolBar
+{
+background: transparent;
+border: 0px;
 }
 QMainWindow
 {
-     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+     background: qlineargradient(y1: 0, y2: 1,
                                  stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
                                  stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
 }
-QSlider::handle:horizontal 
+QLineEdit
 {
-background: transparent;
-width: 8px;
-}
-
-QSlider::groove:horizontal {
-border: 1px solid #444;
-height: 8px;
      background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #babdb6, stop: 1.0 #D3D3D3);
-border-radius: 4px;
+                                 stop: 0 #E1E1E1, stop: 0.4 #e5e5e5,
+                                 stop: 0.5 #e9e9e9, stop: 1.0 #d2d2d2);
 }
-QSlider::sub-page:horizontal {
-background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,
-    stop: 0 #66e, stop: 1 #bbf);
-background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,
-    stop: 0 #bbf, stop: 1 #55f);
-border: 1px solid #777;
-height: 8px;
-border-radius: 4px;
+QPushButton
+{
+background: #D8D8D8;
 }
-QSlider::handle:horizontal:hover {
-background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-    stop:0 #fff, stop:1 #ddd);
-border-radius: 4px;
-}
+    """       
 
-QSlider::sub-page:horizontal:disabled {
-background: #bbb;
-border-color: #999;
-}
-
-QSlider::add-page:horizontal:disabled {
-background: #eee;
-border-color: #999;
-}
-
-QSlider::handle:horizontal:disabled {
-background: #eee;
-border-radius: 4px;
-}
-QSystemTrayIcon::message { 
-font-size: 7pt;
-color: #2e3436; 
-background: #c4a000; 
-border: 1px solid #1f3c5d; }
-    """    
-
-
-if __name__ == "__main__":
-    app = QApplication([])
-    win = MainWin()
-    #win.show()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    mainWin = MainWindow()
+    mainWin.show()
+    mainWin.findfield.setFocus()
     sys.exit(app.exec_())
-    
