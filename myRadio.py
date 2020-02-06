@@ -364,7 +364,7 @@ class MainWin(QMainWindow):
         if wget != "":
             print("%s %s %s" % ("wget found at ", wget, " *** recording enabled"))
             self.msglbl.setText("recording enabled")
-            self.trayIcon.showMessage("Note", "wget found\nrecording enabled", 1000)
+            #self.trayIcon.showMessage("Note", "wget found\nrecording enabled", 1000)
             self.recording_enabled = True
         else:
             self.trayIcon.showMessage("Note", "wget not found\nrecording disabled", 1000)
