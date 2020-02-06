@@ -176,7 +176,7 @@ class MainWin(QMainWindow):
         
     def handleError(self):
         print("Error Player: " + self.player.errorString())
-        self.trayIcon.showMessage("Error", self.player.errorString(), 2000)
+        self.trayIcon.showMessage("Error", self.player.errorString(), self.tIcon, 3000)
         self.msglbl.setText(f"Error:\n{self.player.errorString()}")
            
     def togglePlay(self):          
@@ -347,7 +347,7 @@ class MainWin(QMainWindow):
         self.urlCombo.setCurrentIndex(0)
 
     def edit_Channels(self):
-        self.trayIcon.showMessage("Note", "changes are available after restarting myRadio", 2000)
+        self.trayIcon.showMessage("Note", "changes are available after restarting myRadio", self.tIcon, 2000)
         QDesktopServices.openUrl(QUrl.fromLocalFile(self.radiofile))
 
     def keyPressEvent(self, e):
@@ -364,10 +364,10 @@ class MainWin(QMainWindow):
         if wget != "":
             print("%s %s %s" % ("wget found at ", wget, " *** recording enabled"))
             self.msglbl.setText("recording enabled")
-            #self.trayIcon.showMessage("Note", "wget found\nrecording enabled", 1000)
+            self.trayIcon.showMessage("Note", "wget found\nrecording enabled", self.tIcon, 1400)
             self.recording_enabled = True
         else:
-            self.trayIcon.showMessage("Note", "wget not found\nrecording disabled", 1000)
+            self.trayIcon.showMessage("Note", "wget not found\nrecording disabled", self.tIcon, 2000)
             print("wget not found\nrecording disabled")
             self.recording_enabled = False
 
@@ -394,13 +394,13 @@ class MainWin(QMainWindow):
                 if not trackInfo2 == None:
                     self.metaLabel.setText("%s %s" % (new_trackInfo, trackInfo2))
                     if self.notificationsEnabled == True:
-                        self.trayIcon.showMessage("Radio", "%s %s" % (new_trackInfo, trackInfo2), self.tIcon, 5000)
+                        self.trayIcon.showMessage("Radio", "%s %s" % (new_trackInfo, trackInfo2), self.tIcon, 2000)
                     else:
                         self.trayIcon.setToolTip("%s %s" % (new_trackInfo, trackInfo2))
                 else:
                     self.msglbl.setText(new_trackInfo)
                     if self.notificationsEnabled == True:
-                        self.trayIcon.showMessage("Radio", new_trackInfo, self.tIcon, 5000)
+                        self.trayIcon.showMessage("Radio", new_trackInfo, self.tIcon, 2000)
                     else:
                         self.trayIcon.setToolTip(new_trackInfo)
                     self.msglbl.adjustSize()
@@ -567,7 +567,7 @@ class MainWin(QMainWindow):
             self.recordAction.setIcon(QIcon.fromTheme("media-record"))
             self.showMain()
         else:
-            self.trayIcon.showMessage("Note", "Recording is not in progress", 2000)
+            self.trayIcon.showMessage("Note", "Recording is not in progress", self.tIcon, 2000)
 
     def saveMovie(self):
         if self.is_recording == False:
