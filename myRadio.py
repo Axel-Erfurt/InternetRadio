@@ -32,6 +32,8 @@ class MainWin(QMainWindow):
         self.channels = []
         self.radiofile = ""
         self.radioStations = ""
+        self.rec_name = ""
+        self.rec_url = ""
         self.notificationsEnabled = True
         self.wg = QWidget()
         self.layout = QVBoxLayout()
@@ -362,10 +364,10 @@ class MainWin(QMainWindow):
         if wget != "":
             print("%s %s %s" % ("wget found at ", wget, " *** recording enabled"))
             self.msglbl.setText("recording enabled")
-            self.trayIcon.showMessage("Note", "wget found\nrecording enabled", 2000)
+            self.trayIcon.showMessage("Note", "wget found\nrecording enabled", 1000)
             self.recording_enabled = True
         else:
-            self.trayIcon.showMessage("Note", "wget not found\nrecording disabled", 2000)
+            self.trayIcon.showMessage("Note", "wget not found\nrecording disabled", 1000)
             print("wget not found\nrecording disabled")
             self.recording_enabled = False
 
@@ -454,7 +456,12 @@ class MainWin(QMainWindow):
         self.player.set_media(self.current_station)
         self.set_running_player()
         self.player.start()
-        self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
+        if self.is_recording == True:
+            self.recordAction.setText(f"stop recording {self.rec_name}")
+            self.recordAction.setIcon(QIcon.fromTheme("media-playback-stop"))
+        else:
+            self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
+            self.recordAction.setIcon(QIcon.fromTheme("media-record"))
         self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
         self.setWindowTitle(self.urlCombo.currentText())
 
@@ -531,11 +538,13 @@ class MainWin(QMainWindow):
     def recordRadio1(self):
         if self.is_recording == False:
             self.deleteOutFile()
-            cmd = ("wget -q "  + self.current_station + " -O " + self.outfile)
+            self.rec_url = self.current_station
+            self.rec_name = self.urlCombo.currentText()
+            cmd = ("wget -q "  + self.rec_url + " -O " + self.outfile)
             print(cmd)         
             self.is_recording = True   
             self.process.startDetached(cmd)
-            self.recordAction.setText("stop recording")
+            self.recordAction.setText(f"stop recording {self.rec_name}")
             self.recordAction.setIcon(QIcon.fromTheme("media-playback-stop"))
             self.rec_btn.setVisible(False)
             self.stoprec_btn.setVisible(True)
@@ -565,7 +574,7 @@ class MainWin(QMainWindow):
             print("saving audio")
             infile = QFile(self.outfile)
             path, _ = QFileDialog.getSaveFileName(None, "Save as...", 
-                            QDir.homePath() + "/Musik/" + self.urlCombo.currentText()
+                            QDir.homePath() + "/Musik/" + self.rec_name
                             .replace("-", " ").replace(" - ", " ") + ".mp3", "Audio (*.mp3)")
             if (path != ""):
                 savefile = path
