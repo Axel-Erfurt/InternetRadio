@@ -453,23 +453,18 @@ class MainWindow(QMainWindow):
             t = str(html[0])
         url = t.partition("=")[2].partition("'")[0]
         return (url)
-
+    
     def getURLfromM3U(self, inURL):
-        if "?u=" in inURL:
-            inURL = inURL.partition("?u=")[2]
-        if "&" in inURL:
-            inURL = inURL.partition("&")[0]
-        response = request.urlopen(inURL)
-        html = response.read().splitlines()
+        print("detecting", inURL)
+        response = requests.get(inURL)
+        html = response.text.splitlines()
+        print(html)
         if len(html) > 1:
-            if "http" in str(html[1]):
-                t = str(html[1])
-            else:
-                t = str(html[0])
+            url = str(html[1])
         else:
-            t = str(html[0])
-        url = t.partition("'")[2].partition("'")[0]
-        return (url)
+            url = str(html[0])
+        print(url)
+        return(url)
 
     def findStations(self):
         self.field.setPlainText("")
@@ -575,3 +570,4 @@ if __name__ == '__main__':
     mainWin.show()
     mainWin.findfield.setFocus()
     sys.exit(app.exec_())
+    
