@@ -3,11 +3,11 @@
 
 import os
 import sys
-import encodings
+#import encodings
 import requests
 from subprocess import call
 from PyQt5.QtCore import (Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, 
-                            QStandardPaths, QFile, QDir, QSettings)
+                            QStandardPaths, QFile, QDir, QSettings, QEvent)
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, 
                             QMainWindow, QFileDialog, QListView, QMenu, qApp, QAction, 
                              QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, 
@@ -21,6 +21,40 @@ import RadioFinder
 changed = pyqtSignal(QMimeData)
 btnwidth = 80
 
+class Editor(QWidget):
+    def __init__(self):
+        super(Editor, self).__init__()
+        self.setAttribute(Qt.WA_QuitOnClose, False)
+        self.radiofile = ""
+        self.radio_editor = QPlainTextEdit()
+        self.radio_editor.textChanged.connect(self.setModified)
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.radio_editor)
+        self.setLayout(self.layout)
+        self.setGeometry(0, 0, 800, 600)
+
+    def closeEvent(self, event):
+        if self.isModified == True:
+            quit_msg = "<b>The document was changed.<br>Do you want to save the changes?</ b>\
+                        <br><br><span style='color: #a40000;'>new channels will be available at next start of myRadio</span>"
+            reply = QMessageBox.question(None, 'Save Confirmation', 
+                     quit_msg, QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                if self.saveFile():
+                    print("file saved\nclosing editor")
+                    event.accept()
+                else:
+                    print("closing editor")
+            
+    def saveFile(self):
+        with open(self.radiofile, 'w') as f:
+            f.write(str(self.radio_editor.toPlainText()))
+            f.close()
+            return True
+            
+    def setModified(self):
+        self.isModified = True
+        
 
 class MainWin(QMainWindow):
     def __init__(self):
@@ -87,6 +121,15 @@ class MainWin(QMainWindow):
         self.edit_btn.setIcon(QIcon.fromTheme("preferences-system"))
         self.edit_btn.clicked.connect(self.edit_Channels)
         self.layout1.addWidget(self.edit_btn)
+        ### hide Main Window
+        self.hide_btn = QPushButton("", self)
+        self.hide_btn.setFixedWidth(26)
+        self.hide_btn.setFlat(True)
+        self.hide_btn.setToolTip("hide Window")
+        self.hide_btn.setIcon(QIcon.fromTheme("window-hide"))
+        self.hide_btn.clicked.connect(self.showMain)
+        self.layout1.addWidget(self.hide_btn)        
+        
 
 
         spc1 = QSpacerItem(6, 10, QSizePolicy.Expanding, QSizePolicy.Maximum)
@@ -170,8 +213,12 @@ class MainWin(QMainWindow):
             
             
     def findRadio(self):
-        fr = os.path.join(os.path.dirname(sys.argv[0]), "RadioFinder.py")
-        call(["python3", fr])
+        if self.player.state() == 1:
+            self.player.stop()
+        self.fr = RadioFinder.MainWindow()
+        self.fr.setAttribute(Qt.WA_QuitOnClose, False)
+        self.fr.show()
+        self.fr.findfield.setFocus()
         
         
     def handleError(self):
@@ -191,23 +238,44 @@ class MainWin(QMainWindow):
 
     def getURLfromPLS(self, inURL):
         print("detecting", inURL)
+        t = ""
+        if "&" in inURL:
+            inURL = inURL.partition("&")[0]
         response = requests.get(inURL)
-        html = response.text.splitlines()
-        for x in html:
-            if "File" in x:
-                url = x.partition("=")[2]
-        print(url)
-        return (url)
+        print(response.text)
+        if "http" in response.text:
+            html = response.text.splitlines()
+            if len(html) > 3:
+                if "http" in str(html[1]):
+                    t = str(html[1])
+                elif "http" in str(html[2]):
+                    t = str(html[2])
+                elif "http" in str(html[3]):
+                    t = str(html[3])
+            elif len(html) > 2:
+                if "http" in str(html[1]):
+                    t = str(html[1])
+                elif "http" in str(html[2]):
+                    t = str(html[2])
+            else:
+                t = str(html[0])
+            url = t.partition("=")[2].partition("'")[0]
+            return (url)
+        else:
+           self.lbl.setText("bad playlist format") 
 
     def getURLfromM3U(self, inURL):
         print("detecting", inURL)
         response = requests.get(inURL)
         html = response.text.splitlines()
-        print(html)
-        if len(html) > 1:
-            url = str(html[1])
+        if "#EXTINF" in str(html):
+            url = str(html[1]).partition("http://")[2].partition('"')[0]
+            url = f"http://{url}"
         else:
-            url = str(html[0])
+            if len(html) > 1:
+                url = str(html[1])
+            else:
+                url = str(html[0])
         print(url)
         return(url)
         
@@ -218,8 +286,14 @@ class MainWin(QMainWindow):
         self.tray_menu.setStyleSheet("font-size: 7pt;")
         ##### submenus from categories ##########
         b = self.radioStations.splitlines()
+        for x in reversed(range(len(b))):
+            line = b[x]
+            if line == "":
+                print("empty line:", x)
+                del(b[x])
+                
         i = 0
-        for x in range(len(b)):
+        for x in range(0, len(b)):
             line = b[x]
             while True:
                 if line.startswith("--"):
@@ -228,7 +302,7 @@ class MainWin(QMainWindow):
                     break
                     continue
 
-                if  not line.startswith("--"):
+                elif  not line.startswith("--"):
                     ch = line.partition(",")[0]
                     data = line.partition(",")[2]
                     
@@ -268,11 +342,11 @@ class MainWin(QMainWindow):
         if self.notifAction.text() == "disable Notifications":
             self.notifAction.setText("enable Notifications")
             self.notificationsEnabled = False
-        else:
-            self.notifAction.setText("enable Notifications")
+        elif self.notifAction.text() == "enable Notifications":
             self.notifAction.setText("disable Notifications")
             self.notificationsEnabled = True
         print("Notifications", self.notificationsEnabled )
+        self.metaDataChanged()
 
     def openTrayStation(self):
         action = self.sender()
@@ -306,14 +380,15 @@ class MainWin(QMainWindow):
         if self.settings.contains("lastChannel"):
             lch = self.settings.value("lastChannel")
             self.urlCombo.setCurrentIndex(self.urlCombo.findText(lch))
-            self.url_changed()
         if self.settings.contains("notifications"):
             self.notificationsEnabled = self.settings.value("notifications")
-            if self.settings.value("notifications") == 'false':
+            if self.settings.value("notifications") == "false":
                 self.notifAction.setText("enable Notifications")
             else:
                 self.notifAction.setText("disable Notifications")
-        print("Notifications", self.notificationsEnabled)
+        self.toggleNotif()
+        self.toggleNotif()
+        
 
     def writeSettings(self):
         self.settings.setValue("pos", self.pos())
@@ -329,26 +404,33 @@ class MainWin(QMainWindow):
         self.channels = []
         dir = os.path.dirname(sys.argv[0])
         self.radiofile = os.path.join(dir, "myradio.txt")
-        import codecs
+        #import codecs
         with open(self.radiofile, 'r') as f:
             self.radioStations = f.read()
             f.close()
-            self.radioStations = self.remove_last_line_from_string(self.radioStations)
+            #self.radioStations = self.remove_last_line_from_string(self.radioStations)
             for t in self.radioStations:
                 self.channels.append(t)
             for lines in self.radioStations.split("\n"):
                 if not lines.startswith("--"):
                     self.urlCombo.addItem(QIcon.fromTheme("browser"), lines.partition(",")[0],Qt.UserRole - 1)
-                else:
+                elif lines.startswith("--"):
                     m = QStandardItem(menuSectionIcon,lines.partition(",")[0])
                     m.setEnabled(False)
                     self.urlCombo.model().appendRow(m)            
                 self.radiolist.append(lines.partition(",")[2])
-        self.urlCombo.setCurrentIndex(0)
+        #self.urlCombo.setCurrentIndex(0)
 
     def edit_Channels(self):
+        dir = os.path.dirname(sys.argv[0])
+        self.radiofile = os.path.join(dir, "myradio.txt")
         self.trayIcon.showMessage("Note", "changes are available after restarting myRadio", self.tIcon, 2000)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(self.radiofile))
+        self.edWin = Editor()
+        self.edWin.radiofile = self.radiofile
+        t = open(self.radiofile, 'r').read()
+        self.edWin.radio_editor.setPlainText(t)
+        self.edWin.isModified = False
+        self.edWin.show()
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_F5:
@@ -364,7 +446,7 @@ class MainWin(QMainWindow):
         if wget != "":
             print("%s %s %s" % ("wget found at ", wget, " *** recording enabled"))
             self.msglbl.setText("recording enabled")
-            self.trayIcon.showMessage("Note", "wget found\nrecording enabled", self.tIcon, 1400)
+            self.trayIcon.showMessage("Note", "wget found\nrecording enabled", self.tIcon, 1500)
             self.recording_enabled = True
         else:
             self.trayIcon.showMessage("Note", "wget not found\nrecording disabled", self.tIcon, 2000)
@@ -384,29 +466,33 @@ class MainWin(QMainWindow):
     def metaDataChanged(self):
         if self.player.isMetaDataAvailable():
             trackInfo = (self.player.metaData("Title"))
-            trackInfo2 = (self.player.metaData("Comment"))
+            description = (self.player.metaData("Description"))
+            comment = (self.player.metaData("Comment"))
+            if trackInfo == None:
+                self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
             new_trackInfo = ""
-            if not trackInfo == None and len(trackInfo) > 100:
-                new_trackInfo = str(trackInfo).partition('{"title":"')[2].partition('","')[0].replace('\n', " ")[:200]
-            else:
-                new_trackInfo = str(trackInfo)
-            if not trackInfo == None:
-                if not trackInfo2 == None:
-                    self.metaLabel.setText("%s %s" % (new_trackInfo, trackInfo2))
-                    if self.notificationsEnabled == True:
-                        self.trayIcon.showMessage("Radio", "%s %s" % (new_trackInfo, trackInfo2), self.tIcon, 2000)
-                    else:
-                        self.trayIcon.setToolTip("%s %s" % (new_trackInfo, trackInfo2))
-                else:
-                    self.msglbl.setText(new_trackInfo)
-                    if self.notificationsEnabled == True:
-                        self.trayIcon.showMessage("Radio", new_trackInfo, self.tIcon, 2000)
-                    else:
-                        self.trayIcon.setToolTip(new_trackInfo)
-                    self.msglbl.adjustSize()
-                    self.adjustSize()
+            new_trackInfo = str(trackInfo)
+            if len(new_trackInfo) > 200:
+                new_trackInfo = str(new_trackInfo).partition('{"title":"')[2].partition('","')[0].replace('\n', " ")[:200]
+            if not new_trackInfo == "None":
+                self.msglbl.setText(new_trackInfo)
+                self.msglbl.adjustSize()
+                self.adjustSize()
             else:
                 self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
+            mt = (f"Title:{new_trackInfo}\nDescription:{description}\nComment: {comment}")
+            if description == None:
+                mt = (f"Title:{new_trackInfo}\nComment: {comment}")
+            if comment == None:
+                mt = (f"Title:{new_trackInfo}\nComment: {description}")
+            if description == None and comment == None:
+                mt = (f"{new_trackInfo}")
+            if not mt == "None":
+                print(mt)
+                if self.notificationsEnabled == True:
+                    self.trayIcon.showMessage("myRadio", mt, self.tIcon, 2000)
+                else:
+                    self.trayIcon.setToolTip(mt)
         else:
             self.msglbl.setText("%s %s" % ("playing", self.urlCombo))
 
@@ -448,7 +534,6 @@ class MainWin(QMainWindow):
             self.pause_btn.setFocus()
             self.togglePlayerAction.setText("stop playing")
             self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
-            return
  
         if not self.current_station:
             return
@@ -463,8 +548,7 @@ class MainWin(QMainWindow):
             self.recordAction.setText("%s %s: %s" % ("record", "channel", self.urlCombo.currentText()))
             self.recordAction.setIcon(QIcon.fromTheme("media-record"))
         self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
-        self.setWindowTitle(self.urlCombo.currentText())
-
+        self.setWindowTitle(self.urlCombo.currentText())        
 
     def playURL(self):
         clip = QApplication.clipboard()
@@ -493,6 +577,7 @@ class MainWin(QMainWindow):
         self.set_running_player()
         self.player.start()
         self.msglbl.setText("%s %s" % ("playing", self.urlCombo.currentText()))
+        self.metaDataChanged()
         
     def setVolumeWheel(self):
         print("wheel")
@@ -745,6 +830,7 @@ border: 1px solid #1f3c5d; }
 if __name__ == "__main__":
     app = QApplication([])
     win = MainWin()
+    app.setQuitOnLastWindowClosed(False)
     #win.show()
     sys.exit(app.exec_())
     
