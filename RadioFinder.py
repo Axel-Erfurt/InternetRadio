@@ -75,13 +75,22 @@ Grunge
 Hard Rock
 Blues
 Oldies
+60's
+70's
+80's
+90's
+Nachrichten
+Swing
 Pop
 Rock
 Classic
 Beat
 Metal
 Techno
-Schlager"""
+Disco
+Schlager
+Hits
+Hip Hop"""
 
 class EndPointBuilder:
     def __init__(self, fmt="json"):
@@ -237,6 +246,8 @@ class RadioBrowser:
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+        
+        self.setAttribute(Qt.WA_QuitOnClose, False)
         self.tIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
         self.setWindowIcon(self.tIcon)
         self.setGeometry(0, 0, 700, 400)
@@ -304,11 +315,13 @@ class MainWindow(QMainWindow):
         self.modified = False
         
     def closeEvent(self, event):
+        self.stopPlayer()
         if self.modified == True:
             self.statusBar().showMessage("saved!", 0)
             self.msgbox("new channels available after restarting myRadio")
         
     def addToRadiolist(self):
+        print("self.combo.currentIndex:", self.combo.currentIndex())
         text = ""
         filename = os.path.join(os.path.dirname(sys.argv[0]), "myradio.txt")
         print(filename)
@@ -321,9 +334,13 @@ class MainWindow(QMainWindow):
         for line in textlist:
             if line.startswith("--"):
                 mycat.append(line.replace("-- ", "").replace(" --", ""))
-        
+        ind = 1
+        for x in range(len(mycat)):
+            if mycat[x] == self.combo.currentText():
+                ind = x
+                break
         dlg = QInputDialog()
-        mc,_ = dlg.getItem(self, "", "select Genre for the station", mycat)
+        mc,_ = dlg.getItem(self, "", "select Genre for the station", mycat, ind)
         entry = self.getNameAndUrl()
         print(mc, entry)
         filename = os.path.dirname(sys.argv[0]) + os.sep + "myradio.txt"
@@ -433,36 +450,46 @@ class MainWindow(QMainWindow):
                    self.statusBar().showMessage("%s %s" % (trackInfo, trackInfo2))
 
     def getURLfromPLS(self, inURL):
+        print("detecting", inURL)
+        t = ""
         if "&" in inURL:
             inURL = inURL.partition("&")[0]
-        response = request.urlopen(inURL)
-        html = response.read().decode("utf-8").splitlines()
-        if len(html) > 3:
-            if "http" in str(html[1]):
-                t = str(html[1])
-            elif "http" in str(html[2]):
-                t = str(html[2])
-            elif "http" in str(html[3]):
-                t = str(html[3])
-        elif len(html) > 2:
-            if "http" in str(html[1]):
-                t = str(html[1])
-            elif "http" in str(html[2]):
-                t = str(html[2])
+        response = requests.get(inURL)
+        print(response.text)
+        if "http" in response.text:
+            html = response.text.splitlines()
+            if len(html) > 3:
+                if "http" in str(html[1]):
+                    t = str(html[1])
+                elif "http" in str(html[2]):
+                    t = str(html[2])
+                elif "http" in str(html[3]):
+                    t = str(html[3])
+            elif len(html) > 2:
+                if "http" in str(html[1]):
+                    t = str(html[1])
+                elif "http" in str(html[2]):
+                    t = str(html[2])
+            else:
+                t = str(html[0])
+            url = t.partition("=")[2].partition("'")[0]
+            return (url)
         else:
-            t = str(html[0])
-        url = t.partition("=")[2].partition("'")[0]
-        return (url)
+           print("bad playlist format") 
     
     def getURLfromM3U(self, inURL):
         print("detecting", inURL)
         response = requests.get(inURL)
         html = response.text.splitlines()
         print(html)
-        if len(html) > 1:
-            url = str(html[1])
-        else:
-            url = str(html[0])
+        if "#EXTINF" in str(html):
+            url = str(html[1]).partition("http://")[2].partition('"')[0]
+            url = f"http://{url}"
+        else:       
+            if len(html) > 1:
+                url = str(html[1])
+            else:
+                url = str(html[0])
         print(url)
         return(url)
 
@@ -564,10 +591,10 @@ background: #D8D8D8;
 }
     """       
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    mainWin = MainWindow()
-    mainWin.show()
-    mainWin.findfield.setFocus()
-    sys.exit(app.exec_())
-    
+#if __name__ == '__main__':
+#    app = QApplication(sys.argv)
+#    mainWin = MainWindow()
+#    #mainWin.setAttribute(Qt.WA_QuitOnClose, False)
+#    mainWin.show()
+#    mainWin.findfield.setFocus()
+#    sys.exit(app.exec_())
