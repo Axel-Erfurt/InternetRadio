@@ -383,11 +383,11 @@ class MainWin(QMainWindow):
         if self.settings.contains("notifications"):
             self.notificationsEnabled = self.settings.value("notifications")
             if self.settings.value("notifications") == "false":
+                self.notificationsEnabled = False
                 self.notifAction.setText("enable Notifications")
             else:
+                self.notificationsEnabled = True
                 self.notifAction.setText("disable Notifications")
-        self.toggleNotif()
-        self.toggleNotif()
         
 
     def writeSettings(self):
@@ -404,11 +404,9 @@ class MainWin(QMainWindow):
         self.channels = []
         dir = os.path.dirname(sys.argv[0])
         self.radiofile = os.path.join(dir, "myradio.txt")
-        #import codecs
         with open(self.radiofile, 'r') as f:
             self.radioStations = f.read()
             f.close()
-            #self.radioStations = self.remove_last_line_from_string(self.radioStations)
             for t in self.radioStations:
                 self.channels.append(t)
             for lines in self.radioStations.split("\n"):
@@ -419,7 +417,6 @@ class MainWin(QMainWindow):
                     m.setEnabled(False)
                     self.urlCombo.model().appendRow(m)            
                 self.radiolist.append(lines.partition(",")[2])
-        #self.urlCombo.setCurrentIndex(0)
 
     def edit_Channels(self):
         dir = os.path.dirname(sys.argv[0])
