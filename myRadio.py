@@ -289,7 +289,7 @@ class MainWin(QMainWindow):
         for x in reversed(range(len(b))):
             line = b[x]
             if line == "":
-                print("empty line:", x)
+                print("removing empty line:", x)
                 del(b[x])
                 
         i = 0
@@ -491,6 +491,7 @@ class MainWin(QMainWindow):
                 print(mt)
                 if self.notificationsEnabled == True:
                     self.trayIcon.showMessage("myRadio", mt, self.tIcon, 2000)
+                    self.trayIcon.setToolTip(mt)
                 else:
                     self.trayIcon.setToolTip(mt)
         else:
