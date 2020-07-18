@@ -2,8 +2,74 @@
 MDR Aktuell,http://mdr-284340-0.cast.mdr.de/mdr/284340/0/mp3/low/stream.mp3
 Antenne Thüringen,http://stream.antennethueringen.de/live/mp3-128/
 Landeswelle Thüringen,http://stream.landeswelle.de/lwt/mp3-128/web/stream.mp3
+-- Exclusive Radio --
+Johnny Cash,http://streaming.exclusive.radio/er/johnnycash/icecast.audio
+John Denver,http://streaming.exclusive.radio/er/johndenver/icecast.audio
+Willie Nelson,http://streaming.exclusive.radio/er/willienelson/icecast.audio
+ELO,http://streaming.exclusive.radio/er/elo/icecast.audio
+Cowded House,http://streaming.exclusive.radio/er/crowdedhouse/icecast.audio
+Dire Straits,http://streaming.exclusive.radio/er/direstraits/icecast.audio
+R.E.M,http://streaming.exclusive.radio/er/rem/icecast.audio
+Tom Petty,http://streaming.exclusive.radio/er/tompetty/icecast.audio
+Foreigner,http://streaming.exclusive.radio/er/foreigner/icecast.audio
+Genesis,http://streaming.exclusive.radio/er/genesis/icecast.audio
+Queen,http://streaming.exclusive.radio/er/queen/icecast.audio
+Deep Purple,http://streaming.exclusive.radio/er/deeppurple/icecast.audio
+Whitesnake,http://streaming.exclusive.radio/er/whitesnake/icecast.audio
+Black Sabbath,http://streaming.exclusive.radio/er/blacksabbath/icecast.audio
+Aerosmith,http://streaming.exclusive.radio/er/aerosmith/icecast.audio
+Bryan Adams,http://streaming.exclusive.radio/er/bryanadams/icecast.audio
+ZZ Top,http://streaming.exclusive.radio/er/zztop/icecast.audio
+Bee Gees,http://streaming.exclusive.radio/er/beegees/icecast.audio
+Kenny Rogers,http://streaming.exclusive.radio/er/kennyrogers/icecast.audio
+George Strait,http://streaming.exclusive.radio/er/georgestrait/icecast.audio
+Garth Brooks,http://streaming.exclusive.radio/er/garthbrooks/icecast.audio
+Roy Orbison,http://streaming.exclusive.radio/er/royorbison/icecast.audio
+Beach Boys,http://streaming.exclusive.radio/er/beachboys/icecast.audio
+Beatles,http://streaming.exclusive.radio/er/beatles/icecast.audio
+Byrds,http://streaming.exclusive.radio/er/thebyrds/icecast.audio
+Simon & Garfunkel,http://streaming.exclusive.radio/er/simongarfunkle/icecast.audio
+Moody Blues,http://streaming.exclusive.radio/er/moodyblues/icecast.audio
+Kinks,http://streaming.exclusive.radio/er/thekinks/icecast.audio
+CCR,http://streaming.exclusive.radio/er/creedence/icecast.audio
+The Who,http://streaming.exclusive.radio/er/thewho/icecast.audio
+Everly Brothers,http://streaming.exclusive.radio/er/everlybrothers/icecast.audio
+Rolling Stones,http://streaming.exclusive.radio/er/rollingstones/icecast.audio
+James Taylor,http://streaming.exclusive.radio/er/jamestaylor/icecast.audio
+Neil Diamond,http://streaming.exclusive.radio/er/neildiamond/icecast.audio
+Neil Young,http://streaming.exclusive.radio/er/neilyoung/icecast.audio
+Bob Dylan,http://streaming.exclusive.radio/er/bobdylan/icecast.audio
+Cat Stevens,http://streaming.exclusive.radio/er/catstevens/icecast.audio
+America,http://streaming.exclusive.radio/er/america/icecast.audio
+Disco,http://streaming.exclusive.radio/er/disco/icecast.audio
+Country,http://streaming.exclusive.radio/er/country/icecast.audio
+Folk,http://streaming.exclusive.radio/er/folk/icecast.audio
+Charts,http://streaming.exclusive.radio/er/chart/icecast.audio
+Chicago,http://streaming.exclusive.radio/er/chicago/icecast.audio
+60er,http://streaming.exclusive.radio/er/60s/icecast.audio
+70er,http://streaming.exclusive.radio/er/70s/icecast.audio
+West Coast,http://streaming.exclusive.radio/er/westcoast/icecast.audio
+Soft Rock,http://streaming.exclusive.radio/er/softrock/icecast.audio
+Rock,http://streaming.exclusive.radio/er/rock/icecast.audio
+Rock Music,http://streaming.exclusive.radio/er/rockmusic/icecast.audio
+AC DC,http://streaming.exclusive.radio/er/acdc/icecast.audio
+Alabama,http://streaming.exclusive.radio/er/alabama/icecast.audio
+Abba,http://streaming.exclusive.radio/er/abba/icecast.audio
+Bread,http://streaming.exclusive.radio/er/bread/icecast.audio
+CSNY,http://streaming.exclusive.radio/er/csny/icecast.audio
+Eagles,http://streaming.exclusive.radio/er/eagles/icecast.audio
+Bob Seger,http://streaming.exclusive.radio/er/bobseger/icecast.audio
+Rod Stewart,http://streaming.exclusive.radio/er/rodstewart/icecast.audio
+James Blunt,http://streaming.exclusive.radio/er/jamesblunt/icecast.audio
+Michael Buble,http://streaming.exclusive.radio/er/michaelbuble/icecast.audio
+Frank Sinatra,http://streaming.exclusive.radio/er/franksinatra/icecast.audio
+Ed Sheeran,http://streaming.exclusive.radio/er/edsheeran/icecast.audio
+Aha,http://streaming.exclusive.radio/er/aha/icecast.audio
+Elton John,http://streaming.exclusive.radio/er/eltonjohn/icecast.audio
+Billy Joel,http://streaming.exclusive.radio/er/billyjoel/icecast.audio
+Bruce Springsteen,http://streaming.exclusive.radio/er/springsteen/icecast.audio
+Eric Clapton,http://streaming.exclusive.radio/er/ericclapton/icecast.audio
 -- Country --
-Johnny Cash Radio,http://streaming.radio.co/s9fa0dff72/listen
 Radio Studio Souto - Country,http://192.99.150.31:8111/stream
 WUMB Contemporary Folk Stream - Boston  MA,http://wumb.streamguys1.com/wumb919cf-aac
 Nashville FM,http://server-14.stream-server.nl:8300
