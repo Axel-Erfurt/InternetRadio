@@ -370,6 +370,31 @@ The Mavericks,http://streaming.exclusive.radio/er/themavericks/icecast.audio
 Tim McGraw,http://streaming.exclusive.radio/er/timmcgraw/icecast.audio
 Waylon Jennings,http://streaming.exclusive.radio/er/waylonjennings/icecast.audio
 Willie Nelson,http://streaming.exclusive.radio/er/willienelson/icecast.audio
+-- Exclusive Radio Motown --
+Motown,http://streaming.exclusive.radio/er/motown/icecast.audio
+Soul,http://streaming.exclusive.radio/er/soul/icecast.audio
+Al Green,http://streaming.exclusive.radio/er/algreen/icecast.audio
+Aretha Franklin,http://streaming.exclusive.radio/er/arethafranklin/icecast.audio
+Barry White,http://streaming.exclusive.radio/er/barrywhite/icecast.audio
+Bill Withers,http://streaming.exclusive.radio/er/billwithers/icecast.audio
+Booker T &  The MG's,http://streaming.exclusive.radio/er/bookert/icecast.audio
+Chic,http://streaming.exclusive.radio/er/chic/icecast.audio
+Curtis Mayfield,http://streaming.exclusive.radio/er/curtismayfield/icecast.audio
+Diana Ross,http://streaming.exclusive.radio/er/dianaross/icecast.audio
+Earth, Wind &  Fire,http://streaming.exclusive.radio/er/earthwindandfire/icecast.audio
+James Brown,http://streaming.exclusive.radio/er/jamesbrown/icecast.audio
+Janet Jackson,http://streaming.exclusive.radio/er/janetjackson/icecast.audio
+Lionel Richie,http://streaming.exclusive.radio/er/lionelrichie/icecast.audio
+Marvin Gaye,http://streaming.exclusive.radio/er/marvingaye/icecast.audio
+Mary J. Blige,http://streaming.exclusive.radio/er/maryjblige/icecast.audio
+Otis Redding,http://streaming.exclusive.radio/er/otisredding/icecast.audio
+Sam Cooke,http://streaming.exclusive.radio/er/samcooke/icecast.audio
+Sly and The Family Stone,http://streaming.exclusive.radio/er/slyandthefamilystone/icecast.audio
+Smokey Robinson,http://streaming.exclusive.radio/er/smokeyrobinson/icecast.audio
+Stevie Wonder,http://streaming.exclusive.radio/er/steviewonder/icecast.audio
+The Drifters,http://streaming.exclusive.radio/er/drifters/icecast.audio
+The Four Tops,http://streaming.exclusive.radio/er/fourtops/icecast.audio
+The Temptations,http://streaming.exclusive.radio/er/thetemptations/icecast.audio
 -- Exclusive Radio Blues --
 Blues,http://streaming.exclusive.radio/er/blues/icecast.audio
 Albert Collins,http://streaming.exclusive.radio/er/albertcollins/icecast.audio
