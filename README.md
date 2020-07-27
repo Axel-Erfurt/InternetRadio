@@ -4,6 +4,8 @@ play and record internet radio stations
 ![flag](https://github.com/Axel-Erfurt/InternetRadio/blob/master/de_flag.png)
 deutsche Anleitung -> [UbuntuUsers Howto myRadio](https://wiki.ubuntuusers.de/Baustelle/Howto/myRadio/)
 
+![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/radio2.png)
+
 __Requirements:__
 - PyQt5
 - wget
@@ -103,8 +105,6 @@ for child in root:
             if not url == None and not "separator" in name:
                 print(f'{name},{url}')
 ```
-
-![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/radio2.png)
 
 [Linux App 64bit Download](https://www.dropbox.com/s/zcw2lmrkqmpcto0/myRadio64.tar.gz?dl=1)
 
