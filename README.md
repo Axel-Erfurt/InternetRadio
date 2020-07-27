@@ -78,6 +78,30 @@ __Deinstallation__
 
 `rm -rf ~/.local/share/InternetRadio`
 
+__Bookmarks from Radio Tray__
+
+Python Code to convert a Radio Tray bookmarks.xml 
+
+Insert the text into myradio.txt
+
+change myfile = "/tmp/bookmarks.xml" to the path of your bookmarks.xml
+
+`import xml.etree.ElementTree as ET
+
+myfile = "/tmp/bookmarks.xml"
+tree = ET.parse(myfile)
+
+root = tree.getroot()
+
+print("-- Radio Tray Import --")
+for child in root:
+    for x in range(len(child)):
+        for value in child[x]:
+            name = value.get("name")
+            url = value.get("url")
+            if not url == None and not "separator" in name:
+                print(f'{name},{url}')`
+
 ![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/radio2.png)
 
 [Linux App 64bit Download](https://www.dropbox.com/s/zcw2lmrkqmpcto0/myRadio64.tar.gz?dl=1)
