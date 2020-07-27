@@ -86,7 +86,8 @@ Insert the text into myradio.txt
 
 change myfile = "/tmp/bookmarks.xml" to the path of your bookmarks.xml
 
-`import xml.etree.ElementTree as ET
+```python
+import xml.etree.ElementTree as ET
 
 myfile = "/tmp/bookmarks.xml"
 tree = ET.parse(myfile)
@@ -100,7 +101,8 @@ for child in root:
             name = value.get("name")
             url = value.get("url")
             if not url == None and not "separator" in name:
-                print(f'{name},{url}')`
+                print(f'{name},{url}')
+```
 
 ![alt text](https://github.com/Axel-Erfurt/InternetRadio/blob/master/radio2.png)
 
