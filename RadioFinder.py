@@ -24,7 +24,7 @@ from xml.etree import ElementTree
 from urllib.parse import urljoin
 
 
-BASE_URL = "http://www.radio-browser.info/webservice/"
+BASE_URL =  "https://de1.api.radio-browser.info/"
 
 endpoints = {
     "countries": {1: "{fmt}/countries", 2: "{fmt}/countries/{filter}"},
