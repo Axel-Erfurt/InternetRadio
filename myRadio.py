@@ -3,12 +3,11 @@
 
 import os
 import sys
-#import encodings
 import requests
 from subprocess import call
 from PyQt5.QtCore import (Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, 
                             QStandardPaths, QFile, QDir, QSettings, QEvent)
-from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, 
+from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, QToolButton, 
                             QMainWindow, QFileDialog, QListView, QMenu, qApp, QAction, 
                              QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, 
                             QMessageBox, QPlainTextEdit, QSystemTrayIcon)
@@ -140,7 +139,7 @@ class MainWin(QMainWindow):
         self.level_lbl = QLabel(self)
         self.level_lbl.setAlignment(Qt.AlignHCenter)
         self.level_lbl.setText("Volume 65")
-        self.layout.addWidget(self.urlCombo)
+        #self.layout.addWidget(self.urlCombo)
         self.layout.addLayout(self.layout1)
         self.layout.addItem(spc1)
         self.layout.addWidget(self.level_sld)
@@ -181,6 +180,8 @@ class MainWin(QMainWindow):
 
         self.trayIcon = QSystemTrayIcon()
         self.trayIcon.setIcon(trayIcon)
+        self.trayIcon.installEventFilter(self)
+        self.trayIcon.activated.connect(self.setTrayTrigger)
         self.trayIcon.show()
                 
         self.metaLabel = QLabel()
@@ -200,6 +201,7 @@ class MainWin(QMainWindow):
         self.findExecutable()
         self.readSettings()
         self.makeTrayMenu()
+        self.createWindowMenu()
         if QSystemTrayIcon.isSystemTrayAvailable():
             print("QSystemTrayIcon is available")
         else:
@@ -210,6 +212,69 @@ class MainWin(QMainWindow):
         elif self.player.state() == QMediaPlayer.PlayingState:
             self.togglePlayerAction.setText("stop playing")
             self.togglePlayerAction.setIcon(QIcon.fromTheme("media-playback-stop"))
+            
+    def createWindowMenu(self):
+        self.tb = self.addToolBar("Menu")
+        self.tb_menu = QMenu()
+        self.tb.setIconSize(QSize(20, 20))
+        
+        ##### submenus from categories ##########
+        b = self.radioStations.splitlines()
+        for x in reversed(range(len(b))):
+            line = b[x]
+            if line == "":
+                print(f"empty line {x} removed")
+                del(b[x])
+               
+        i = 0
+        for x in range(0, len(b)):
+            line = b[x]
+            while True:
+                if line.startswith("--"):
+                    chm = self.tb_menu.addMenu(line.replace("-- ", "").replace(" --", ""))
+                    chm.setIcon(self.tIcon)
+                    break
+                    continue
+
+                elif not line.startswith("--"):
+                    chm.addAction(self.stationActs[i])
+                    i += 1
+                    break
+        ####################################
+        toolButton = QToolButton()
+        toolButton.setIcon(self.tIcon)
+        toolButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        toolButton.setText("   Stations")
+        toolButton.setMenu(self.tb_menu)
+        toolButton.setPopupMode(QToolButton.InstantPopup)
+        self.tb.addWidget(toolButton)
+
+        self.tb.setContextMenuPolicy(Qt.PreventContextMenu)
+        self.tb.setMovable(False)
+        self.tb.setAllowedAreas(Qt.TopToolBarArea)
+            
+    def eventFilter(self, source, event):
+        if source is self.trayIcon:
+            if event.type() == QEvent.Wheel:
+                vol = self.level_sld.value()
+                if event.angleDelta().y() > 1:
+                    self.level_sld.setValue(int(vol) + 5)
+                else:
+                    self.level_sld.setValue(int(vol) - 5)
+        return super(MainWin, self).eventFilter(source, event)
+        
+    def setTrayTrigger(self, reason):
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.showMainfromTray()
+        elif reason == QSystemTrayIcon.MiddleClick:
+            self.muteFromTray()
+
+        
+    def muteFromTray(self):
+        if self.player.isMuted():
+            self.player.setMuted(False)
+        else:
+            self.player.setMuted(True)
             
             
     def findRadio(self):
@@ -337,6 +402,16 @@ class MainWin(QMainWindow):
         elif self.isVisible() ==True:
             self.showWinAction.setText("show Main Window")
             self.setVisible(False)
+            
+    def showMainfromTray(self):
+        buttons = qApp.mouseButtons()
+        if buttons == Qt.LeftButton:
+            if self.isVisible() == False:
+                self.showWinAction.setText("hide Main Window")
+                self.setVisible(True)
+            elif self.isVisible() == True:
+                self.showWinAction.setText("show Main Window")
+                self.setVisible(False)
             
     def toggleNotif(self):
         if self.notifAction.text() == "disable Notifications":
