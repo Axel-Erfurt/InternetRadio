@@ -4,17 +4,14 @@
 import os
 import sys
 import requests
-from subprocess import call
-from PyQt5.QtCore import (Qt, QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, 
+from PyQt5.QtCore import (QUrl, pyqtSignal, Qt, QMimeData, QSize, QPoint, QProcess, 
                             QStandardPaths, QFile, QDir, QSettings, QEvent)
-from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QStatusBar, QToolButton, 
-                            QMainWindow, QFileDialog, QListView, QMenu, qApp, QAction, 
+from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QSlider, QToolButton, 
+                            QMainWindow, QFileDialog, QMenu, qApp, QAction, 
                              QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSpacerItem, QSizePolicy, 
                             QMessageBox, QPlainTextEdit, QSystemTrayIcon)
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
-from PyQt5.QtGui import QIcon, QPixmap, QPalette, QCursor, QStandardItem
-from PyQt5.Qt import QDesktopServices
+from PyQt5.QtGui import QIcon, QStandardItem
 import RadioFinder
 
 changed = pyqtSignal(QMimeData)
@@ -345,7 +342,6 @@ class MainWin(QMainWindow):
         return(url)
         
     def makeTrayMenu(self):
-        menuSectionIcon = QIcon(os.path.join(os.path.dirname(sys.argv[0]), "radio_bg.png"))
         self.tray_menu = QMenu()
         self.tray_menu.addAction(self.togglePlayerAction)
         self.tray_menu.setStyleSheet("font-size: 7pt;")
@@ -368,9 +364,7 @@ class MainWin(QMainWindow):
                     continue
 
                 elif  not line.startswith("--"):
-                    ch = line.partition(",")[0]
-                    data = line.partition(",")[2]
-                    
+                    ch = line.partition(",")[0]                    
                     self.stationActs.append(QAction(QIcon.fromTheme("browser"), ch, triggered = self.openTrayStation))
                     self.stationActs[i].setData(str(i))
                     chm.addAction(self.stationActs[i])
@@ -412,6 +406,10 @@ class MainWin(QMainWindow):
             elif self.isVisible() == True:
                 self.showWinAction.setText("show Main Window")
                 self.setVisible(False)
+        if self.isVisible():
+            self.showWinAction.setText("hide Main Window")
+        else:
+           self.showWinAction.setText("show Main Window") 
             
     def toggleNotif(self):
         if self.notifAction.text() == "disable Notifications":
@@ -689,7 +687,7 @@ class MainWin(QMainWindow):
     def update_volume_slider(self, level):
         self.level_lbl.setText("Volume " + str(level))
         self.level_sld.blockSignals(True)
-        self.level_sld.setValue(value)
+        self.level_sld.setValue(level)
         self.level_lbl.setText("Volume " + str(level))
         self.level_sld.blockSignals(False)
 
